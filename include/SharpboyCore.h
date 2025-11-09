@@ -7,7 +7,10 @@
 #include "Utilities/FileReader.h"
 #include "Utilities/Testing.h"
 
+#include "CPU.h"
+#include "Bus.h"
 #include "Cartridges/CartDefs.h"
+#include "Timing.h"
 
 struct s_core_context {
 	bool initialised = false;
@@ -41,4 +44,9 @@ private:
 
 	//EMU COMPONENTS
 	std::unique_ptr<Cartridge> m_cartridge;
+	CPU m_cpu;
+	Bus m_bus;
+
+	//TIMING FOR THE SYSTEM
+	Timing m_timing;
 };

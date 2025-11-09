@@ -9,6 +9,10 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path) {
 		return;
 	}
 
+	m_cpu.set_bus_ptr(&m_bus);
+	m_cpu.set_timing_ptr(&m_timing);
+	m_timing.attach_components(&m_cpu);
+
 	m_core.initialised = true;
 	m_core.emu_ready = true;
 }
@@ -32,9 +36,6 @@ bool SharpboyCore::emu_init_for_sst() {
 		return false;
 	}
 
-	//reset cpu 
-
-	//reset cartridge and make sst type
 	m_cartridge.reset();
 	m_cartridge = std::make_unique<CartridgeSST>();
 	
@@ -43,9 +44,8 @@ bool SharpboyCore::emu_init_for_sst() {
 		return false;
 	}
 
-	//reset bus to sst mode
-	//add cart and cpu to bus
-
+	m_bus.set_cart_ptr(m_cartridge.get());
+	m_bus.set_sst_mode();
 	return true;
 }
 
@@ -63,6 +63,11 @@ bool SharpboyCore::emu_init(std::string rom_file_name) {
 //CALL WHEN CLOSING AN EMULATOR INSTANCE
 void SharpboyCore::cleanup() {
 	m_cartridge.reset();
+
+	m_bus.set_cart_ptr(nullptr);
+	m_bus.reset_sst_mode();
+
+	m_cpu.reset_sst();
 
 	m_core.emu_ready = true;
 	std::cout << "CLEANUP SUCCESSFUL. READY FOR NEW INSTANCE\n";
@@ -83,21 +88,24 @@ void SharpboyCore::run_ssts(std::string sst_path, bool background_thread) {
 	}
 
 	//create sst object and init
-	SST_Tester test = SST_Tester();
-	test.init(sst_path, sst_cart);
-	if (!test.is_initialised()) {
+	SST_Tester sst_tester = SST_Tester();
+	sst_tester.init(sst_path, sst_cart, &m_cpu);
+	if (!sst_tester.is_initialised()) {
 		std::cout << "FAILED SST INITIALISATION!\n";
 		return;
 	}
 
+	//set a ptr to set for cpu to add cycles
+	m_cpu.set_sst_ptr(&sst_tester);
+
 	//UNPREFIXED OPCODES
 	for (int i = 0; i < SST_TEST_COUNT_NORMAL; i++) {
-		if (!test.run_test(false, i)) {
+		if (!sst_tester.run_test(false, i)) {
 			break;
 		}
 	}
 
-	std::vector<s_test_result>* result = test.get_results();
+	std::vector<s_test_result>* result = sst_tester.get_results();
 	for (s_test_result r : *result) {
 		std::cout << r.message << "\n";
 	}
