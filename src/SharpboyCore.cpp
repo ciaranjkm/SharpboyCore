@@ -49,6 +49,18 @@ void SharpboyCore::run_ssts(std::string sst_path) {
 	else {
 		std::cout << "SST CAST SUCCESSFUL\nSTARTING SSTs...\n";
 	}
+
+	//read json file with sst data
+	//reset cpu and cart
+
+	//step cpu 
+
+	//compare results
+
+	//if bad log and continue
+
+	//free ptr to cartridge
+	sst_cart = nullptr;
 }
 
 //debug getters and setters

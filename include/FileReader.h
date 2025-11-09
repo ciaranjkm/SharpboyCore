@@ -38,6 +38,7 @@ private:
 private:
 	//CHECK IF ROMS DIR EXISTS AND ATTEMPT TO CREATE IT, RETURN TRUE IF DIR FOUND
 	inline bool roms_directory_check(std::string rom_path, std::string boot_rom_path) {
+		std::cout << "CHECKING FOR ROMS DIRECTORY...\n";
 		if (!std::filesystem::exists(rom_path)) {
 			std::cout << "FAILED TO FIND ROMS DIRECTORY! ATTEMPTING TO CREATE ONE...\n";
 
