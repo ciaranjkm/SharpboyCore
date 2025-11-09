@@ -5,10 +5,8 @@
 #include <chrono>
 
 #include "Utilities/FileReader.h"
-#include "Utilities/SST_Defs.h"
-#include "Utilities/NlohmannJSON/json.hpp"
+#include "Utilities/Testing.h"
 
-//components
 #include "Cartridges/CartDefs.h"
 
 struct s_core_context {
@@ -19,27 +17,28 @@ struct s_core_context {
 
 class SharpboyCore {
 public:
+	//CONS | DEST
 	SharpboyCore(std::string roms_path, std::string boot_rom_path);
 	~SharpboyCore();
 
-	//initialisation
+	//INIT SHUDOWN
 	bool is_initialised() const;
 	void cleanup();
 
 	bool emu_init_for_sst();
 	bool emu_init(std::string rom_file_name);
 
-	//execution
+	//RUN
 	void run_ssts(std::string sst_path, bool background_thread);
 	void run();
 
-	//debug getters/setters
+	//DEBUG
 	s_core_context* get_core_context();
 
 private:
-	//member variables
+	//MEMBER VARIABLES
 	s_core_context m_core;
 
-	//emulation components
+	//EMU COMPONENTS
 	std::unique_ptr<Cartridge> m_cartridge;
 };
