@@ -1,13 +1,19 @@
 #pragma once
 
 #include <iostream>
-#include "FileReader.h"
+#include <thread>
+#include <chrono>
+
+#include "Utilities/FileReader.h"
+#include "Utilities/SST_Defs.h"
+#include "Utilities/NlohmannJSON/json.hpp"
 
 //components
-#include "Cartridges/Cartridges.h"
+#include "Cartridges/CartDefs.h"
 
 struct s_core_context {
 	bool initialised = false;
+	bool emu_ready = false;
 	bool is_running = false;
 };
 
@@ -18,12 +24,13 @@ public:
 
 	//initialisation
 	bool is_initialised() const;
+	void cleanup();
 
 	bool emu_init_for_sst();
 	bool emu_init(std::string rom_file_name);
 
 	//execution
-	void run_ssts(std::string sst_path);
+	void run_ssts(std::string sst_path, bool background_thread);
 	void run();
 
 	//debug getters/setters
