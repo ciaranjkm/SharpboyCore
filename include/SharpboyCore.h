@@ -6,6 +6,7 @@
 
 #include "Utilities/FileReader.h"
 #include "Utilities/Testing.h"
+#include "Utilities/Logger.h"
 
 #include "CPU.h"
 #include "Bus.h"

@@ -5,40 +5,45 @@
 #include "SST_Defs.h"
 #include "NlohmannJSON/json.hpp"
 #include "Common.h"
+#include "Logger.h"
 
 class CartridgeSST;
 class CPU;
 
 class SST_Tester {
 public:
+	//CONS DEST
 	~SST_Tester();
 
+	//INITIALISATION
 	void init(std::string sst_path, CartridgeSST* cartridge_ptr, CPU* cpu_ptr);
-
 	bool is_initialised() const;
-	void reset();
 
-	//execution
+	//EXECUTION
 	bool check_test_exists(bool prefix, int test_opcode);
 	bool run_test(bool prefix, int test_opcode);
 
+	//RESULTS
 	void clear_test_results();
 	std::vector<s_test_result>* get_results();
+	u16 get_last_cycle_address() const;
+	u8 get_last_cycle_value() const;
 
+	//CYCLES
 	void add_cycle(u16 address, u8 value, std::string op);
 	void reset_cycles();
 
 private:
-	//control bools
-	bool initialised = false;
-	std::string sst_path = "";
+	//MEMBER VARIABLES
+	bool m_test_initialised = false;
+	std::string m_sst_dir_path = "";
 
-	//ptr to components
+	//PTR TO COMPONENTS
 	CartridgeSST* cartridge = nullptr;
 	CPU* cpu = nullptr;
 
-	//test vars
-	std::unique_ptr<s_test_case> test = nullptr;
-	std::vector<s_test_cycle> test_result_cycles = std::vector<s_test_cycle>();
-	std::vector<s_test_result> test_results = std::vector<s_test_result>();
+	//TEST DATA
+	std::unique_ptr<s_test_case> m_test_case = nullptr;
+	std::vector<s_test_result> m_test_results = std::vector<s_test_result>();
+	std::vector<s_test_cycle> m_subtest_cycles = std::vector<s_test_cycle>();
 };

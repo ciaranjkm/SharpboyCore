@@ -13,8 +13,6 @@ public:
 
 	void attach_components(CPU* cpu);
 
-	void advance_cycles();
-
 	void real_ticks(int ticks);
 	void real_cycle();
 

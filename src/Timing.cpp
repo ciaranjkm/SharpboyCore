@@ -10,13 +10,6 @@ void Timing::attach_components(CPU* cpu) {
 	m_cpu = cpu;
 }
 
-void Timing::advance_cycles() {
-	if (sst_mode) {
-		m_cpu->execute_next_instruction();
-		return;
-	}
-}
-
 void Timing::real_ticks(int ticks) {
 	for (int i = 0; i < ticks; i++) {
 		//advance other components

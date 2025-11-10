@@ -22,7 +22,7 @@ u8 CartridgeSST::read(u16 address) const {
 }
 
 void CartridgeSST::write(u16 address, u8 value) {
-	printf("CART WRITE BLOCKED: 0x%04X <- 0x%02X\n", address, value);
+	m_rom[address] = value;
 	return;
 }
 
