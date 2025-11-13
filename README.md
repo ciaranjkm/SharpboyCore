@@ -1,6 +1,6 @@
 # SharpboyCore
 
-This is a work in progress Game Boy emulator core written in C++ to be used in projects with GUI or CLI interface.
+This is a work in progress Game Boy emulator core written in C++ designed to be plug and play type integration, handling all the emulation itself and you just do the output.
 I've tried to be as user friendly as possible but im not an expert in C++.
 I have written some comments as well on parts of the code to help add SharpBoy to your own project.
 
