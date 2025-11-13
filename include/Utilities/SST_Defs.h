@@ -1,0 +1,127 @@
+#pragma once
+
+#include "Common.h"
+#include <array>
+#include <vector>
+#include <string>
+#include <format>
+
+//HALT STOP CB AND ILLEGAL OPCODES REMOVED
+const int SST_TEST_COUNT_NORMAL = 242;
+const int SST_TEST_COUNT_CB = 1;
+
+const int SST_MEMORY_SIZE = 0x10000;
+
+static const std::array<std::string, SST_TEST_COUNT_NORMAL> sst_test_names_normal = {
+	"00.json", "01.json", "02.json", "03.json", "04.json", "05.json", "06.json", "07.json",
+	"08.json", "09.json", "0a.json", "0b.json", "0c.json", "0d.json", "0e.json", "0f.json",
+	
+	"11.json", "12.json", "13.json", "14.json", "15.json", "16.json", "17.json", "18.json", 
+	"19.json", "1a.json", "1b.json", "1c.json", "1d.json", "1e.json", "1f.json",
+
+	"20.json", "21.json", "22.json", "23.json", "24.json", "25.json", "26.json", "27.json",
+	"28.json", "29.json", "2a.json", "2b.json", "2c.json", "2d.json", "2e.json", "2f.json",
+
+	"30.json", "31.json", "32.json", "33.json", "34.json", "35.json", "36.json", "37.json",
+	"38.json", "39.json", "3a.json", "3b.json", "3c.json", "3d.json", "3e.json", "3f.json",
+
+	"40.json", "41.json", "42.json", "43.json", "44.json", "45.json", "46.json", "47.json",
+	"48.json", "49.json", "4a.json", "4b.json", "4c.json", "4d.json", "4e.json", "4f.json",
+
+	"50.json", "51.json", "52.json", "53.json", "54.json", "55.json", "56.json", "57.json",
+	"58.json", "59.json", "5a.json", "5b.json", "5c.json", "5d.json", "5e.json", "5f.json",
+
+	"60.json", "61.json", "62.json", "63.json", "64.json", "65.json", "66.json", "67.json",
+	"68.json", "69.json", "6a.json", "6b.json", "6c.json", "6d.json", "6e.json", "6f.json",
+
+	"70.json", "71.json", "72.json", "73.json", "74.json", "75.json", "77.json", "78.json", 
+	"79.json", "7a.json", "7b.json", "7c.json", "7d.json", "7e.json", "7f.json",
+
+	"80.json", "81.json", "82.json", "83.json", "84.json", "85.json", "86.json", "87.json",
+	"88.json", "89.json", "8a.json", "8b.json", "8c.json", "8d.json", "8e.json", "8f.json",
+
+	"90.json", "91.json", "92.json", "93.json", "94.json", "95.json", "96.json", "97.json",
+	"98.json", "99.json", "9a.json", "9b.json", "9c.json", "9d.json", "9e.json", "9f.json",
+
+	"a0.json", "a1.json", "a2.json", "a3.json", "a4.json", "a5.json", "a6.json", "a7.json",
+	"a8.json", "a9.json", "aa.json", "ab.json", "ac.json", "ad.json", "ae.json", "af.json",
+
+	"b0.json", "b1.json", "b2.json", "b3.json", "b4.json", "b5.json", "b6.json", "b7.json",
+	"b8.json", "b9.json", "ba.json", "bb.json", "bc.json", "bd.json", "be.json", "bf.json",
+
+	"c0.json", "c1.json", "c2.json", "c3.json", "c4.json", "c5.json", "c6.json", "c7.json",
+	"c8.json", "c9.json", "ca.json", "cc.json", "cd.json", "ce.json", "cf.json", 
+
+	"d0.json", "d1.json", "d2.json", "d4.json", "d5.json", "d6.json", "d7.json", "d8.json", 
+	"d9.json", "da.json", "dc.json", "de.json", "df.json", 
+
+	"e0.json", "e1.json", "e2.json", "e5.json", "e6.json", "e7.json", "e8.json", "e9.json", 
+	"ea.json", "ee.json", "ef.json", 
+	
+	"f0.json", "f1.json", "f2.json", "f3.json", "f5.json", "f6.json", "f7.json", "f8.json", 
+	"f9.json", "fa.json", "fb.json", "fe.json", "ff.json"
+};
+
+static const std::array<std::string, SST_TEST_COUNT_CB> sst_test_names_prefixed = {
+	"cb 00.json"
+};
+
+static const std::array<std::string, 0x08> sst_register_names = {
+	"a", "f", "b", "c", "d", "e", "h", "l"
+};
+
+struct s_test_result {
+	bool failed = false;
+	std::string message = "";
+
+	int test_index = 0;
+};
+
+struct s_test_cycle {
+	u16 address;
+	u8 value;
+	std::string operation;
+};
+
+struct s_test_mem_entry {
+	u16 address;
+	u8 value;
+};
+
+inline static s_test_cycle create_test_cycle(u16 address, u8 value, std::string operation) {
+	return s_test_cycle(address, value, operation);
+}
+
+struct s_test_case {
+	void clear_all() {
+		initial_memory.clear();
+		final_memory.clear();
+
+		initial_registers.fill(0x00);
+		final_registers.fill(0x00);
+
+		initial_pc = 0x0000;
+		final_pc = 0x0000;
+
+		initial_sp = 0x0000;
+		final_sp = 0x0000;
+
+		final_cycles.clear();
+	}
+
+	std::string test_name;
+
+	std::vector<s_test_mem_entry> initial_memory = std::vector<s_test_mem_entry>();
+	std::vector<s_test_mem_entry> final_memory = std::vector<s_test_mem_entry>();
+
+	std::array<u8, 0x08> initial_registers = std::array<u8, 0x08>();
+	std::array<u8, 0x08> final_registers = std::array<u8, 0x08>();
+
+	u16 initial_pc;
+	u16 final_pc;
+
+	u16 initial_sp;
+	u16 final_sp;
+
+	std::vector<s_test_cycle> final_cycles = std::vector<s_test_cycle>();
+};

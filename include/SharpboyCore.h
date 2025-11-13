@@ -1,38 +1,62 @@
 #pragma once
 
 #include <iostream>
-#include "FileReader.h"
+#include <thread>
+#include <atomic>
+#include <chrono>
+#include <functional>
 
-//components
-#include "Cartridges/Cartridges.h"
+#include "Utilities/FileReader.h"
+#include "Utilities/Testing.h"
+#include "Utilities/Logger.h"
+
+#include "CPU.h"
+#include "Bus.h"
+#include "Cartridges/CartDefs.h"
+#include "Timing.h"
 
 struct s_core_context {
 	bool initialised = false;
+	bool emu_ready = false;
 	bool is_running = false;
+};
+
+struct s_core_sst_context {
+	std::atomic_bool sst_active = false;
 };
 
 class SharpboyCore {
 public:
-	SharpboyCore(std::string roms_path, std::string boot_rom_path);
+	//CONS | DEST
+	SharpboyCore(std::string roms_path, std::string boot_rom_path, bool status_out = true, bool debug_out = false);
 	~SharpboyCore();
 
-	//initialisation
+	//INIT SHUDOWN
 	bool is_initialised() const;
+	void cleanup();
 
 	bool emu_init_for_sst();
 	bool emu_init(std::string rom_file_name);
 
-	//execution
-	void run_ssts(std::string sst_path);
+	//RUN
+	void run_ssts(std::string sst_path, bool background_thread);
 	void run();
 
-	//debug getters/setters
+	//DEBUG
 	s_core_context* get_core_context();
 
 private:
-	//member variables
-	s_core_context m_core;
+	//MEMBER VARIABLES
 
-	//emulation components
+	//CONTEXT STRUCT
+	s_core_context m_core_context;
+	s_core_sst_context m_sst_context;
+
+	//EMU COMPONENTS
 	std::unique_ptr<Cartridge> m_cartridge;
+	CPU m_cpu;
+	Bus m_bus;
+
+	//TIMING FOR THE SYSTEM
+	Timing m_timing;
 };
