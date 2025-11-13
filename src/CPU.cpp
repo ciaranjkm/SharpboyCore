@@ -69,7 +69,7 @@ void CPU::reset_regs(std::array<u8, 0x08> regs, u16 sp, u16 pc) {
 }
 
 //sst
-bool CPU::set_sst_ptr(SST_Tester* sst_tester) {
+bool CPU::start_sst_mode(SST_Tester* sst_tester) {
 	tester = sst_tester;
 	if (tester) {
 		msg_status("CPU set tester pointer");

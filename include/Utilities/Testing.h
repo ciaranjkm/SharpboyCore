@@ -7,6 +7,7 @@
 #include "Common.h"
 #include "Logger.h"
 
+class Cartridge;
 class CartridgeSST;
 class CPU;
 
@@ -16,7 +17,7 @@ public:
 	~SST_Tester();
 
 	//INITIALISATION
-	void init(std::string sst_path, CartridgeSST* cartridge_ptr, CPU* cpu_ptr);
+	void init(std::string sst_path, Cartridge* cartridge_ptr, CPU* cpu_ptr);
 	bool is_initialised() const;
 
 	//EXECUTION
@@ -39,11 +40,15 @@ private:
 	std::string m_sst_dir_path = "";
 
 	//PTR TO COMPONENTS
-	CartridgeSST* cartridge = nullptr;
-	CPU* cpu = nullptr;
+	CartridgeSST* m_cart = nullptr;
+	CPU* m_cpu = nullptr;
 
 	//TEST DATA
 	std::unique_ptr<s_test_case> m_test_case = nullptr;
 	std::vector<s_test_result> m_test_results = std::vector<s_test_result>();
 	std::vector<s_test_cycle> m_subtest_cycles = std::vector<s_test_cycle>();
+
+private:
+	//MEMBER FUNCTIONS
+	void init_reset();
 };

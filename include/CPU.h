@@ -44,7 +44,7 @@ public:
 	void reset_regs(std::array<u8 , 0x08> regs, u16 sp, u16 pc);
 
 	//sst
-	bool set_sst_ptr(SST_Tester* sst_tester);
+	bool start_sst_mode(SST_Tester* sst_tester);
 	void reset_sst();
 
 	//debug

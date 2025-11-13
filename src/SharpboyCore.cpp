@@ -1,12 +1,14 @@
 #include "../include/SharpboyCore.h"
 
 //INITIALISE FILEREADER AND OTHER DEPS
-SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path) {
+SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, bool status_out, bool debug_out) {
+	update_logger(status_out, debug_out);
+	
 	//initialise file reader
 	fReader = std::make_unique<FileReader>(roms_path, boot_rom_path);
 	
 	if (!fReader->is_initialied()) {
-		m_core.initialised = false;
+		m_core_context.initialised = false;
 		return;
 	}
 
@@ -18,10 +20,10 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path) {
 	m_timing.attach_components(&m_cpu);
 
 	//init and ready to start new emu instance
-	m_core.initialised = true;
-	m_core.emu_ready = true;
+	m_core_context.initialised = true;
+	m_core_context.emu_ready = true;
 
-	msg_status("Core created successfully");
+	msg_default("SharpboyCore created successfully");
 }
 
 //DESTROY POINTERS AND CLEANUP
@@ -34,38 +36,30 @@ SharpboyCore::~SharpboyCore() {
 
 //GETTER
 bool SharpboyCore::is_initialised() const {
-	return m_core.initialised;
+	return m_core_context.initialised;
 }
 
 //INITIALISE EMULATOR FOR SST RUN, REINITIALISE AFTER SST FINISH FOR A NEW INSTANCE
 //CLEANUP NEEDS TO BE CALLED PRIOR TO INITIALISING A NEW INSTANCE
 bool SharpboyCore::emu_init_for_sst() {
-	if (!m_core.emu_ready) {
+	if (!m_core_context.emu_ready) {
 		msg_error("Instance not ready! Did you call cleanup?");
 		return false;
 	}
 
-	//create new sst cartridge
+	//create new sst cartridge and update bus pointer
 	m_cartridge.reset();
 	m_cartridge = std::make_unique<CartridgeSST>();
-	
-	//check for nullptr as will cast in single step test to load test data
-	if (!m_cartridge) {
-		return false;
-	}
+	m_bus.set_sst_mode(m_cartridge.get());
 
-	//set new pointer in bus
-	m_bus.set_cart_ptr(m_cartridge.get());
-	m_bus.set_sst_mode();
-
-	msg_status("SST initialisation successful");
+	msg_status("Initialised for SSTs");
 	return true;
 }
 
 //INITIALISATION FOR NORMAL SHARPBOY RUN, REINITIALISE FOR A NEW INSTANCE,
 //CLEANUP NEEDS TO BE CALLED PRIOR TO INITIALISING A NEW INSTANCE
 bool SharpboyCore::emu_init(std::string rom_file_name) {
-	if (!m_core.emu_ready) {
+	if (!m_core_context.emu_ready) {
 		msg_error("Instance not ready! Did you call cleanup?");
 		return false;
 	}
@@ -75,62 +69,56 @@ bool SharpboyCore::emu_init(std::string rom_file_name) {
 
 //CALL WHEN CLOSING AN EMULATOR INSTANCE
 void SharpboyCore::cleanup() {
+	//reset components and destroy cart object
 	m_cartridge.reset();
-
-	m_bus.set_cart_ptr(nullptr);
 	m_bus.reset_sst_mode();
-
 	m_cpu.reset_sst();
 
-	m_core.emu_ready = true;
+	m_core_context.emu_ready = true;
 	msg_status("Cleanup successful, ready for new instance");
 }
 
 //execution
 //EXECUTE ALL SINGLE STEP TESTS FOR NORMAL AND PREFIXED OPCODES
 //HALT, STOP AND ILLGEAL OPCODES ARE NOT INCLUDED
+
+//CAN BE RUN AS BACKGROUND THREAD WITH FLAG SET
 void SharpboyCore::run_ssts(std::string sst_path, bool background_thread) {
-	//cast to sst cart type to load test data
-	CartridgeSST* sst_cart = dynamic_cast<CartridgeSST*>(m_cartridge.get());
-	if (!sst_cart) {
-		msg_error("Unable to cast to SST cartridge type, exiting...");
+	SST_Tester sst_tester = SST_Tester();
+	sst_tester.init(sst_path, m_cartridge.get(), &m_cpu);
+	if (!sst_tester.is_initialised()) {
 		return;
+	}
+
+	//RUN THE TESTS FOR UNPREFIXED OPCODES IN A SEPERATE THREAD
+	msg_status("SSTs running...");
+	if (!background_thread) {
+		int test_number = 0;
+		
+		while (test_number < SST_TEST_COUNT_NORMAL) {
+			sst_tester.run_test(false, test_number);
+			test_number++;
+
+			msg_sst_progress(false, test_number, SST_TEST_COUNT_NORMAL);
+		}	
 	}
 	else {
-		msg_status("SST cast successful\nStarting SSTs...");
+		//TODO MULTITHREADING SST IN GUI OR CLI
+		//THIS FUNCTION DOESNT CLOSE THIS THREAD
+		//HANDLE IN CLI OR GUI TO PICKUP AND CLOSE THREAD
+
+		//WHEN CLOSING THE THREAD
+		std::thread sst_thread = std::thread([&sst_tester]() {
+			for (int i = 0; i < SST_TEST_COUNT_NORMAL; i++) {
+				sst_tester.run_test(false, i);
+			}
+		});
 	}
-
-	//create sst object and init
-	SST_Tester sst_tester = SST_Tester();
-	sst_tester.init(sst_path, sst_cart, &m_cpu);
-	if (!sst_tester.is_initialised()) {
-		msg_status("SST object initialistion failed");
-		return;
-	}
-	msg_status("SST object initialistion successful");
-
-	//set a ptr to set for cpu to add cycles
-	m_cpu.set_sst_ptr(&sst_tester);
-
-	//test unprefixed opcodes
-	for (int i = 0; i < SST_TEST_COUNT_NORMAL; i++) {
-		if (!sst_tester.run_test(false, i)) {
-			break;
-		}
-	}
-
-	//display results 
-	std::vector<s_test_result>* result = sst_tester.get_results();
-	for (s_test_result r : *result) {
-		std::cout << r.message << "\n";
-	}
-
-	//reset cart ptr
-	sst_cart = nullptr;
-	result = nullptr;
+	
+	m_sst_context.sst_active.store(false);
 }
 
 //DEBUG 
 s_core_context* SharpboyCore::get_core_context() {
-	return &m_core;
+	return &m_core_context;
 }

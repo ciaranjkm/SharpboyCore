@@ -2,7 +2,9 @@
 
 #include <iostream>
 #include <thread>
+#include <atomic>
 #include <chrono>
+#include <functional>
 
 #include "Utilities/FileReader.h"
 #include "Utilities/Testing.h"
@@ -19,10 +21,14 @@ struct s_core_context {
 	bool is_running = false;
 };
 
+struct s_core_sst_context {
+	std::atomic_bool sst_active = false;
+};
+
 class SharpboyCore {
 public:
 	//CONS | DEST
-	SharpboyCore(std::string roms_path, std::string boot_rom_path);
+	SharpboyCore(std::string roms_path, std::string boot_rom_path, bool status_out = true, bool debug_out = false);
 	~SharpboyCore();
 
 	//INIT SHUDOWN
@@ -41,7 +47,10 @@ public:
 
 private:
 	//MEMBER VARIABLES
-	s_core_context m_core;
+
+	//CONTEXT STRUCT
+	s_core_context m_core_context;
+	s_core_sst_context m_sst_context;
 
 	//EMU COMPONENTS
 	std::unique_ptr<Cartridge> m_cartridge;
