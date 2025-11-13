@@ -6,7 +6,7 @@ CPU::~CPU() {
 	m_timing = nullptr;
 }
 
-//execution
+//EXECUTION
 int CPU::execute_next_instruction() {
 	int cycles = 0;
 	u8 opcode = read_pc(); //dont update cycles for overlap 
@@ -15,7 +15,7 @@ int CPU::execute_next_instruction() {
 	return cycles;
 }
 
-//initialisation
+//INITIALISATION
 bool CPU::set_bus_ptr(Bus* bus) {
 	m_bus = bus;
 
@@ -68,7 +68,7 @@ void CPU::reset_regs(std::array<u8, 0x08> regs, u16 sp, u16 pc) {
 	m_registers.pc = pc;
 }
 
-//sst
+//SST
 bool CPU::start_sst_mode(SST_Tester* sst_tester) {
 	tester = sst_tester;
 	if (tester) {
@@ -90,12 +90,12 @@ void CPU::reset_sst() {
 	msg_status("CPU reset sst");
 }
 
-//debug
+//DEBUG
 s_registers* CPU::get_registers() {
 	return &m_registers;
 }
 
-//execution
+//EXECUTION
 int CPU::execute_opcode(u8 opcode) {
 	int cycles = 0;
 
@@ -402,34 +402,34 @@ int CPU::execute_cb_opcode(int cycles) {
 	return cycles_cb;
 }
 
-//timing
+//TIMING
 void CPU::tick_components(int ticks) {
 	m_timing->real_ticks(ticks);
 }
 
 void CPU::idle_cycle() {
 	m_timing->real_ticks(4);
-	add_test_cycle(tester->get_last_cycle_address(), tester->get_last_cycle_value(), "---");
+	add_test_cycle(true);
 }
 
-//memory access
+//MEMORY ACCESS
 u8 CPU::read(u16 address) {
 	m_timing->real_cycle();
 	u8 value = m_bus->read(address);
 
-	add_test_cycle(address, value, "r-m");
+	add_test_cycle(false, address, value, "r-m");
 	return value;
 }
 
 void CPU::write(u16 address, u8 value) {
 	m_bus->write(address, value);
-	add_test_cycle(address, value, "-wm");
+	add_test_cycle(false, address, value, "-wm");
 }
 
 u8 CPU::read_pc(bool read_interrupt) {
 	m_timing->real_cycle();
 	u8 value = m_bus->read(m_registers.pc);
-	add_test_cycle(m_registers.pc, value, "r-m");
+	add_test_cycle(false, m_registers.pc, value, "r-m");
 
 	if (read_interrupt) {
 		//read interrupts pending here
@@ -446,7 +446,7 @@ u16 CPU::read_pc_short() {
 	return (u16)(high << 8 | low);
 }
 
-//flag helpers
+//FLAG HELPERS
 bool CPU::get_flag(e_flags flag) const {
 	return (m_registers.f >> flag) & 0x1;
 }
@@ -460,8 +460,7 @@ void CPU::set_flag(e_flags flag, bool state) {
 	}
 }
 
-//register helpers
-
+//REGISTER HELPERS
 u16 CPU::get_joined_reg(e_joined_regs reg) const {
 	switch (reg) {
 	case rAF:
@@ -511,11 +510,11 @@ void CPU::set_joined_reg(e_joined_regs reg, u16 value) {
 	}
 }
 
-//sst
-void CPU::add_test_cycle(u16 address, u8 value, std::string operation) {
+//SST
+void CPU::add_test_cycle(bool idle, u16 address, u8 value, std::string operation) {
 	if (sst) {
 		if (tester) {
-			tester->add_cycle(address, value, operation);
+			tester->add_cycle(idle, address, value, operation);
 		}
 	}
 }

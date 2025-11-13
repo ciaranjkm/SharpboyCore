@@ -65,6 +65,10 @@ bool SST_Tester::is_initialised() const {
 	return m_test_initialised;
 }
 
+/*
+	TODO:: cleanup tester class and rename file and class. remove ex functions and add add_cycle func that can add cycle to the test from the cpu, stop cpu from owning cycles.
+*/
+
 //EXECUTION
 bool SST_Tester::check_test_exists(bool prefix, int test_opcode) {
 	if (!prefix) {
@@ -211,22 +215,15 @@ std::vector<s_test_result>* SST_Tester::get_results() {
 	return &m_test_results;
 }
 
-u16 SST_Tester::get_last_cycle_address() const {
-	if(m_subtest_cycles.size() == 0) {
-		return 0x0000;
+void SST_Tester::add_cycle(bool idle, u16 address, u8 value, std::string op) {
+	if (idle && !m_subtest_cycles.empty()) {
+		u16 last_address = m_subtest_cycles.back().address;
+		u8 last_value = m_subtest_cycles.back().value;
+		m_subtest_cycles.emplace_back(last_address, last_value, "---");
+
+		return;
 	}
 
-	return m_subtest_cycles.back().address;
-}
-
-u8 SST_Tester::get_last_cycle_value() const {
-	if (m_subtest_cycles.size() == 0) {
-		return 0x00;
-	}
-	return m_subtest_cycles.back().value;
-}
-
-void SST_Tester::add_cycle(u16 address, u8 value, std::string op) {
 	m_subtest_cycles.emplace_back(address, value, op);
 }
 

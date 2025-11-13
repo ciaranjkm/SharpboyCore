@@ -103,7 +103,6 @@ void SharpboyCore::run_ssts(std::string sst_path, bool background_thread) {
 		}	
 	}
 	else {
-		//TODO MULTITHREADING SST IN GUI OR CLI
 		//THIS FUNCTION DOESNT CLOSE THIS THREAD
 		//HANDLE IN CLI OR GUI TO PICKUP AND CLOSE THREAD
 

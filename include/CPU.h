@@ -67,34 +67,34 @@ private:
 	SST_Tester* tester = nullptr;
 
 private:
-	//execution
+	//EXECUTION
 	int execute_opcode(u8  opcode);
 	int execute_cb_opcode(int cycles);
 
-	//timing
+	//TIMING
 	void tick_components(int ticks);
 	void idle_cycle();
 
-	//memory access
+	//MEMORY ACCESS
 	u8  read(u16 address);
 	void write(u16 address, u8  value);
 
 	u8 read_pc(bool read_interrupt = false);
 	u16 read_pc_short();
 
-	//flag helpers 
+	//FLAG HELPERS 
 	bool get_flag(e_flags flag) const;
 	void set_flag(e_flags flag, bool state);
 
-	//register helpers
+	//REGISTER HELPERS
 	u16 get_joined_reg(e_joined_regs reg) const;
 	void set_joined_reg(e_joined_regs reg, u16 value);
 
-	//sst
-	void add_test_cycle(u16 address, u8  value, std::string operation);
+	//SST
+	void add_test_cycle(bool idle, u16 address = 0x0000, u8 value = 0x00, std::string operation = "");
 
 private:
-	//opcode functions
+	//OPCODE FUNCTIONS
 
 	//8 bit load instructions
 	int ld_r_r(u8 & dest, u8 src);

@@ -1,9 +1,9 @@
 #pragma once
 #include <format>
 
-#include "FileReader.h"
-#include "SST_Defs.h"
 #include "NlohmannJSON/json.hpp"
+#include "SST_Defs.h"
+#include "FileReader.h"
 #include "Common.h"
 #include "Logger.h"
 
@@ -27,11 +27,9 @@ public:
 	//RESULTS
 	void clear_test_results();
 	std::vector<s_test_result>* get_results();
-	u16 get_last_cycle_address() const;
-	u8 get_last_cycle_value() const;
 
 	//CYCLES
-	void add_cycle(u16 address, u8 value, std::string op);
+	void add_cycle(bool idle, u16 address = 0x0000, u8 value = 0x00, std::string op = "");
 	void reset_cycles();
 
 private:
