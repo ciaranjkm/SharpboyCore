@@ -1,21 +1,21 @@
-#include "../include/CPU.h"
+#include "../include/bCPU.h"
 
 //8 bit load instructions
 
-int CPU::ld_r_r(u8& dest, u8 src) {
+int bCPU::ld_r_r(u8& dest, u8 src) {
 	dest = src;
 
 	return ticks_0;
 }
 
-int CPU::ld_r_n(u8& dest) {
+int bCPU::ld_r_n(u8& dest) {
 	u8 value = read_pc();
 	dest = value;
 
 	return ticks_4;
 }
 
-int CPU::ld_r_hl(u8& dest) {
+int bCPU::ld_r_hl(u8& dest) {
 	u16 hl = get_joined_reg(rHL);
 	u8 value = read(hl);
 	dest = value;
@@ -23,14 +23,14 @@ int CPU::ld_r_hl(u8& dest) {
 	return ticks_4;
 }
 
-int CPU::ld_hl_r(u8 src) {
+int bCPU::ld_hl_r(u8 src) {
 	u16 hl = get_joined_reg(rHL);
 	write(hl, src);
 
 	return ticks_4;
 }
 
-int CPU::ld_hl_n() {
+int bCPU::ld_hl_n() {
 	u16 hl = get_joined_reg(rHL);
 	u8 value = read_pc();
 	write(hl, value);
@@ -38,7 +38,7 @@ int CPU::ld_hl_n() {
 	return ticks_8;
 }
 
-int CPU::ld_a_bc() {
+int bCPU::ld_a_bc() {
 	u16 bc = get_joined_reg(rBC);
 	u8 value = read(bc);
 	m_registers.a = value;
@@ -46,7 +46,7 @@ int CPU::ld_a_bc() {
 	return ticks_4;
 }
 
-int CPU::ld_a_de() {
+int bCPU::ld_a_de() {
 	u16 de = get_joined_reg(rDE);
 	u8 value = read(de);
 	m_registers.a = value;
@@ -54,21 +54,21 @@ int CPU::ld_a_de() {
 	return ticks_4;
 }
 
-int CPU::ld_bc_a() {
+int bCPU::ld_bc_a() {
 	u16 bc = get_joined_reg(rBC);
 	write(bc, m_registers.a);
 
 	return ticks_4;
 }
 
-int CPU::ld_de_a() {
+int bCPU::ld_de_a() {
 	u16 de = get_joined_reg(rDE);
 	write(de, m_registers.a);
 
 	return ticks_4;
 }
 
-int CPU::ld_a_nn() {
+int bCPU::ld_a_nn() {
 	u16 address = read_pc_short();
 	u8 value = read(address);
 
@@ -77,14 +77,14 @@ int CPU::ld_a_nn() {
 	return ticks_12;
 }
 
-int CPU::ld_nn_a() {
+int bCPU::ld_nn_a() {
 	u16 address = read_pc_short();
 	write(address, m_registers.a);
 
 	return ticks_12;
 }
 
-int CPU::ldh_a_c() {
+int bCPU::ldh_a_c() {
 	u16 address = 0xff00 + m_registers.c;
 	u8 value = read(address);
 
@@ -93,14 +93,14 @@ int CPU::ldh_a_c() {
 	return ticks_4;
 }
 
-int CPU::ldh_c_a() {
+int bCPU::ldh_c_a() {
 	u16 address = 0xff00 + m_registers.c;
 	write(address, m_registers.a);
 
 	return ticks_4;
 }
 
-int CPU::ldh_a_n() {
+int bCPU::ldh_a_n() {
 	u8 n = read_pc();
 	u16 address = 0xff00 + n;
 	u8 value = read(address);
@@ -110,7 +110,7 @@ int CPU::ldh_a_n() {
 	return ticks_8;
 }
 
-int CPU::ldh_n_a() {
+int bCPU::ldh_n_a() {
 	u8 n = read_pc();
 	u16 address = 0xff00 + n;
 
@@ -119,7 +119,7 @@ int CPU::ldh_n_a() {
 	return ticks_8;
 }
 
-int CPU::ld_a_hl_dec() {
+int bCPU::ld_a_hl_dec() {
 	u16 hl = get_joined_reg(rHL);
 	u8 value = read(hl);
 
@@ -129,7 +129,7 @@ int CPU::ld_a_hl_dec() {
 	return ticks_4;
 }
 
-int CPU::ld_hl_dec_a() {
+int bCPU::ld_hl_dec_a() {
 	u16 hl = get_joined_reg(rHL);
 	write(hl, m_registers.a);
 	set_joined_reg(rHL, --hl);
@@ -137,7 +137,7 @@ int CPU::ld_hl_dec_a() {
 	return ticks_4;
 }
 
-int CPU::ld_a_hl_inc() {
+int bCPU::ld_a_hl_inc() {
 	u16 hl = get_joined_reg(rHL);
 	u8 value = read(hl);
 
@@ -147,7 +147,7 @@ int CPU::ld_a_hl_inc() {
 	return ticks_4;
 }
 
-int CPU::ld_hl_inc_a() {
+int bCPU::ld_hl_inc_a() {
 	u16 hl = get_joined_reg(rHL);
 	write(hl, m_registers.a);
 	set_joined_reg(rHL, hl + 1);
@@ -157,21 +157,21 @@ int CPU::ld_hl_inc_a() {
 
 //16 bit load instructions
 
-int CPU::ld_rr_nn(e_joined_regs dest) {
+int bCPU::ld_rr_nn(e_joined_regs dest) {
 	u16 value = read_pc_short();
 	set_joined_reg(dest, value);
 
 	return ticks_8;
 }
 
-int CPU::ld_rr_nn(u16& dest) {
+int bCPU::ld_rr_nn(u16& dest) {
 	u16 value = read_pc_short();
 	dest = value;
 
 	return ticks_8;
 }
 
-int CPU::ld_nn_sp() {
+int bCPU::ld_nn_sp() {
 	u16 nn = read_pc_short();
 
 	u8 sp_low = m_registers.sp & 0x00ff;
@@ -183,7 +183,7 @@ int CPU::ld_nn_sp() {
 	return ticks_16;
 }
 
-int CPU::ld_sp_hl() {
+int bCPU::ld_sp_hl() {
 	u16 hl = get_joined_reg(rHL);
 
 	idle_cycle();
@@ -192,7 +192,7 @@ int CPU::ld_sp_hl() {
 	return ticks_4;
 }
 
-int CPU::push_rr(e_joined_regs src) {
+int bCPU::push_rr(e_joined_regs src) {
 	u16 rr = get_joined_reg(src);
 
 	u8 rr_high = rr >> 8;
@@ -209,7 +209,7 @@ int CPU::push_rr(e_joined_regs src) {
 	return ticks_12;
 }
 
-int CPU::pop_rr(e_joined_regs src) {
+int bCPU::pop_rr(e_joined_regs src) {
 	u8 rr_low = read(m_registers.sp);
 	m_registers.sp++;
 
@@ -222,7 +222,7 @@ int CPU::pop_rr(e_joined_regs src) {
 	return ticks_8;
 }
 
-int CPU::ld_hl_sp_offset() {
+int bCPU::ld_hl_sp_offset() {
 	u8 sp_low = m_registers.sp & 0x00ff;
 	u8 sp_high = m_registers.sp >> 8;
 
@@ -248,7 +248,7 @@ int CPU::ld_hl_sp_offset() {
 }
 
 //8 bit arithmetic and logic instructions
-int CPU::add_r(u8 src) {
+int bCPU::add_r(u8 src) {
 	u8 result = m_registers.a + src;
 
 	set_flag(fZERO, result == 0x00);
@@ -260,7 +260,7 @@ int CPU::add_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::add_hl() {
+int bCPU::add_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -275,7 +275,7 @@ int CPU::add_hl() {
 	return ticks_4;
 }
 
-int CPU::add_n() {
+int bCPU::add_n() {
 	u8 src = read_pc();
 
 	u8 result = m_registers.a + src;
@@ -289,7 +289,7 @@ int CPU::add_n() {
 	return ticks_4;
 }
 
-int CPU::adc_r(u8 src) {
+int bCPU::adc_r(u8 src) {
 	bool c_flag = get_flag(fCARRY);
 	u8 result = m_registers.a + src + c_flag;
 
@@ -305,7 +305,7 @@ int CPU::adc_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::adc_hl() {
+int bCPU::adc_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -325,7 +325,7 @@ int CPU::adc_hl() {
 	return ticks_4;
 }
 
-int CPU::adc_n() {
+int bCPU::adc_n() {
 	u8 src = read_pc();
 
 	bool c_flag = get_flag(fCARRY);
@@ -343,7 +343,7 @@ int CPU::adc_n() {
 	return ticks_4;
 }
 
-int CPU::sub_r(u8 src) {
+int bCPU::sub_r(u8 src) {
 	u8 result = m_registers.a - src;
 
 	bool new_half_carry = (m_registers.a & 0x0f) < (src & 0x0f);
@@ -359,7 +359,7 @@ int CPU::sub_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::sub_hl() {
+int bCPU::sub_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -378,7 +378,7 @@ int CPU::sub_hl() {
 	return ticks_4;
 }
 
-int CPU::sub_n() {
+int bCPU::sub_n() {
 	u8 src = read_pc();
 
 	u8 result = m_registers.a - src;
@@ -396,7 +396,7 @@ int CPU::sub_n() {
 	return ticks_4;
 }
 
-int CPU::sbc_r(u8 src) {
+int bCPU::sbc_r(u8 src) {
 	bool c_flag = get_flag(fCARRY);
 	u8 result = m_registers.a - src - c_flag;
 
@@ -413,7 +413,7 @@ int CPU::sbc_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::sbc_hl() {
+int bCPU::sbc_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -433,7 +433,7 @@ int CPU::sbc_hl() {
 	return ticks_4;
 }
 
-int CPU::sbc_n() {
+int bCPU::sbc_n() {
 	u8 src = read_pc();
 
 	bool c_flag = get_flag(fCARRY);
@@ -453,7 +453,7 @@ int CPU::sbc_n() {
 
 }
 
-int CPU::cp_r(u8 src) {
+int bCPU::cp_r(u8 src) {
 	u8 result = m_registers.a - src;
 
 	bool new_half_carry = (m_registers.a & 0x0f) < (src & 0x0f);
@@ -467,7 +467,7 @@ int CPU::cp_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::cp_hl() {
+int bCPU::cp_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -484,7 +484,7 @@ int CPU::cp_hl() {
 	return ticks_4;
 }
 
-int CPU::cp_n() {
+int bCPU::cp_n() {
 	u8 src = read_pc();
 
 	u8 result = m_registers.a - src;
@@ -500,7 +500,7 @@ int CPU::cp_n() {
 	return ticks_4;
 }
 
-int CPU::inc_r(u8& src) {
+int bCPU::inc_r(u8& src) {
 	u8 result = src + 0x01;
 
 	bool new_half_carry = (src & 0x0f) + 0x01 > 0x0f;
@@ -514,7 +514,7 @@ int CPU::inc_r(u8& src) {
 	return ticks_0;
 }
 
-int CPU::inc_hl() {
+int bCPU::inc_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -530,7 +530,7 @@ int CPU::inc_hl() {
 	return ticks_8;
 }
 
-int CPU::dec_r(u8& src) {
+int bCPU::dec_r(u8& src) {
 	u8 result = src - 1;
 	bool new_half_carry = (src & 0x0f) < 0x01;
 
@@ -543,7 +543,7 @@ int CPU::dec_r(u8& src) {
 	return ticks_0;
 }
 
-int CPU::dec_hl() {
+int bCPU::dec_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -559,7 +559,7 @@ int CPU::dec_hl() {
 	return ticks_8;
 }
 
-int CPU::and_r(u8 src) {
+int bCPU::and_r(u8 src) {
 	u8 result = m_registers.a & src;
 	m_registers.a = result;
 
@@ -571,7 +571,7 @@ int CPU::and_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::and_hl() {
+int bCPU::and_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -586,7 +586,7 @@ int CPU::and_hl() {
 	return ticks_4;
 }
 
-int CPU::and_n() {
+int bCPU::and_n() {
 	u8 src = read_pc();
 
 	u8 result = m_registers.a & src;
@@ -600,7 +600,7 @@ int CPU::and_n() {
 	return ticks_4;
 }
 
-int CPU::or_r(u8 src) {
+int bCPU::or_r(u8 src) {
 	u8 result = m_registers.a | src;
 	m_registers.a = result;
 
@@ -612,7 +612,7 @@ int CPU::or_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::or_hl() {
+int bCPU::or_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -627,7 +627,7 @@ int CPU::or_hl() {
 	return ticks_4;
 }
 
-int CPU::or_n() {
+int bCPU::or_n() {
 	u8 src = read_pc();
 
 	u8 result = m_registers.a | src;
@@ -641,7 +641,7 @@ int CPU::or_n() {
 	return ticks_4;
 }
 
-int CPU::xor_r(u8 src) {
+int bCPU::xor_r(u8 src) {
 	u8 result = m_registers.a ^ src;
 	m_registers.a = result;
 
@@ -653,7 +653,7 @@ int CPU::xor_r(u8 src) {
 	return ticks_0;
 }
 
-int CPU::xor_hl() {
+int bCPU::xor_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -668,7 +668,7 @@ int CPU::xor_hl() {
 	return ticks_4;
 }
 
-int CPU::xor_n() {
+int bCPU::xor_n() {
 	u8 src = read_pc();
 
 	u8 result = m_registers.a ^ src;
@@ -682,7 +682,7 @@ int CPU::xor_n() {
 	return ticks_4;
 }
 
-int CPU::ccf() {
+int bCPU::ccf() {
 	set_flag(fSUB, false);
 	set_flag(fHCARRY, false);
 	set_flag(fCARRY, !get_flag(fCARRY));
@@ -690,7 +690,7 @@ int CPU::ccf() {
 	return ticks_0;
 }
 
-int CPU::scf() {
+int bCPU::scf() {
 	set_flag(fSUB, false);
 	set_flag(fHCARRY, false);
 	set_flag(fCARRY, true);
@@ -698,7 +698,7 @@ int CPU::scf() {
 	return ticks_0;
 }
 
-int CPU::daa() {
+int bCPU::daa() {
 	u8 a = m_registers.a;
 	u8 adjustment = 0x00;
 
@@ -739,7 +739,7 @@ int CPU::daa() {
 	return ticks_0;
 }
 
-int CPU::cpl() {
+int bCPU::cpl() {
 	m_registers.a = ~m_registers.a;
 
 	set_flag(fSUB, true);
@@ -749,7 +749,7 @@ int CPU::cpl() {
 }
 
 //16 bit arithemtic instructions
-int CPU::inc_rr(e_joined_regs dest) {
+int bCPU::inc_rr(e_joined_regs dest) {
 	u16 rr = get_joined_reg(dest);
 	rr += 1;
 
@@ -760,7 +760,7 @@ int CPU::inc_rr(e_joined_regs dest) {
 	return ticks_4;
 }
 
-int CPU::dec_rr(e_joined_regs dest) {
+int bCPU::dec_rr(e_joined_regs dest) {
 	u16 rr = get_joined_reg(dest);
 	rr -= 1;
 
@@ -771,7 +771,7 @@ int CPU::dec_rr(e_joined_regs dest) {
 	return ticks_4;
 }
 
-int CPU::add_hl_rr(e_joined_regs src) {
+int bCPU::add_hl_rr(e_joined_regs src) {
 	u16 hl = get_joined_reg(rHL);
 	u16 rr = get_joined_reg(src);
 
@@ -792,7 +792,7 @@ int CPU::add_hl_rr(e_joined_regs src) {
 	return ticks_4;
 }
 
-int CPU::add_hl_rr(u16 src) {
+int bCPU::add_hl_rr(u16 src) {
 	u16 hl = get_joined_reg(rHL);
 
 	u16 result = hl + src;
@@ -812,7 +812,7 @@ int CPU::add_hl_rr(u16 src) {
 	return ticks_4;
 }
 
-int CPU::add_sp_e() {
+int bCPU::add_sp_e() {
 	s8 e = read_pc();
 	u16 result = m_registers.sp + e;
 
@@ -833,7 +833,7 @@ int CPU::add_sp_e() {
 }
 
 //rotate shift and bit op instructions
-int CPU::rlca() {
+int bCPU::rlca() {
 	u8 b7 = (m_registers.a >> 7) & 0x01;
 	bool new_carry = b7 != 0;
 
@@ -847,7 +847,7 @@ int CPU::rlca() {
 	return ticks_0;
 }
 
-int CPU::rrca() {
+int bCPU::rrca() {
 	u8 b0 = m_registers.a & 0x01;
 	bool new_carry = b0 != 0;
 
@@ -861,7 +861,7 @@ int CPU::rrca() {
 	return ticks_0;
 }
 
-int CPU::rla() {
+int bCPU::rla() {
 	u8 current_carry = (u8)get_flag(fCARRY);
 	u8 b7 = (m_registers.a >> 7) & 0x01;
 	bool new_carry = b7 != 0;
@@ -876,7 +876,7 @@ int CPU::rla() {
 	return ticks_0;
 }
 
-int CPU::rra() {
+int bCPU::rra() {
 	u8 current_carry = (u8)get_flag(fCARRY);
 	u8 b0 = m_registers.a & 0x01;
 	bool new_carry = b0 != 0;
@@ -891,7 +891,7 @@ int CPU::rra() {
 	return ticks_0;
 }
 
-int CPU::rlc_r(u8& src) {
+int bCPU::rlc_r(u8& src) {
 	u8 b7 = (src >> 7) & 0x01;
 	bool new_carry = b7 != 0;
 
@@ -906,7 +906,7 @@ int CPU::rlc_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::rlc_hl() {
+int bCPU::rlc_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -924,7 +924,7 @@ int CPU::rlc_hl() {
 	return ticks_12;
 }
 
-int CPU::rrc_r(u8& src) {
+int bCPU::rrc_r(u8& src) {
 	u8 b0 = src & 0x01;
 	bool new_carry = b0 != 0;
 
@@ -939,7 +939,7 @@ int CPU::rrc_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::rrc_hl() {
+int bCPU::rrc_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -957,7 +957,7 @@ int CPU::rrc_hl() {
 	return ticks_12;
 }
 
-int CPU::rl_r(u8& src) {
+int bCPU::rl_r(u8& src) {
 	u8 b7 = (src >> 7) & 0x01;
 	u8 current_carry = (u8)get_flag(fCARRY);
 	bool new_carry = b7 != 0;
@@ -973,7 +973,7 @@ int CPU::rl_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::rl_hl() {
+int bCPU::rl_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -992,7 +992,7 @@ int CPU::rl_hl() {
 	return ticks_12;
 }
 
-int CPU::rr_r(u8& src) {
+int bCPU::rr_r(u8& src) {
 	u8 b0 = src & 0x01;
 	u8 current_carry = (u8)get_flag(fCARRY);
 	bool new_carry = b0 != 0;
@@ -1008,7 +1008,7 @@ int CPU::rr_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::rr_hl() {
+int bCPU::rr_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1027,7 +1027,7 @@ int CPU::rr_hl() {
 	return ticks_12;
 }
 
-int CPU::sla_r(u8& src) {
+int bCPU::sla_r(u8& src) {
 	u8 b7 = (src >> 7) & 0x01;
 	bool new_carry = b7 != 0;
 
@@ -1042,7 +1042,7 @@ int CPU::sla_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::sla_hl() {
+int bCPU::sla_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1060,7 +1060,7 @@ int CPU::sla_hl() {
 	return ticks_12;
 }
 
-int CPU::sra_r(u8& src) {
+int bCPU::sra_r(u8& src) {
 	u8 b7 = (src >> 7) & 0x1;
 	u8 b0 = src & 0x1;
 	bool new_carry = b0 != 0;
@@ -1076,7 +1076,7 @@ int CPU::sra_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::sra_hl() {
+int bCPU::sra_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1095,7 +1095,7 @@ int CPU::sra_hl() {
 	return ticks_12;
 }
 
-int CPU::swap_r(u8& src) {
+int bCPU::swap_r(u8& src) {
 	u8 result = (src << 4) | (src >> 4);
 	src = result;
 
@@ -1107,7 +1107,7 @@ int CPU::swap_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::swap_hl() {
+int bCPU::swap_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1122,7 +1122,7 @@ int CPU::swap_hl() {
 	return ticks_12;
 }
 
-int CPU::srl_r(u8& src) {
+int bCPU::srl_r(u8& src) {
 	u8 b0 = src & 0x1;
 	bool new_carry = b0 != 0;
 
@@ -1137,7 +1137,7 @@ int CPU::srl_r(u8& src) {
 	return ticks_4;
 }
 
-int CPU::srl_hl() {
+int bCPU::srl_hl() {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1155,7 +1155,7 @@ int CPU::srl_hl() {
 	return ticks_12;
 }
 
-int CPU::bit_b_r(int bit, u8 src) {
+int bCPU::bit_b_r(int bit, u8 src) {
 	bool zero = (src & (0x01 << bit)) != 0;
 
 	set_flag(fZERO, !zero);
@@ -1165,7 +1165,7 @@ int CPU::bit_b_r(int bit, u8 src) {
 	return ticks_4;
 }
 
-int CPU::bit_b_hl(int bit) {
+int bCPU::bit_b_hl(int bit) {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1178,14 +1178,14 @@ int CPU::bit_b_hl(int bit) {
 	return ticks_8;
 }
 
-int CPU::res_b_r(int bit, u8& src) {
+int bCPU::res_b_r(int bit, u8& src) {
 	u8 mask = ~(1 << bit);
 	src &= mask;
 
 	return ticks_4;
 }
 
-int CPU::res_b_hl(int bit) {
+int bCPU::res_b_hl(int bit) {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1197,14 +1197,14 @@ int CPU::res_b_hl(int bit) {
 	return ticks_12;
 }
 
-int CPU::set_b_r(int bit, u8& src) {
+int bCPU::set_b_r(int bit, u8& src) {
 	u8 set = (1 << bit);
 	src |= set;
 
 	return ticks_4;
 }
 
-int CPU::set_b_hl(int bit) {
+int bCPU::set_b_hl(int bit) {
 	u16 hl = get_joined_reg(rHL);
 	u8 src = read(hl);
 
@@ -1216,7 +1216,7 @@ int CPU::set_b_hl(int bit) {
 }
 
 //control flow instructions
-int CPU::jp_nn() {
+int bCPU::jp_nn() {
 	u8 nn_low = read_pc();
 	u8 nn_high = read_pc();
 
@@ -1228,7 +1228,7 @@ int CPU::jp_nn() {
 	return ticks_12;
 }
 
-int CPU::jp_hl() {
+int bCPU::jp_hl() {
 	u16 hl = get_joined_reg(rHL);
 
 	m_registers.pc = hl;
@@ -1236,7 +1236,7 @@ int CPU::jp_hl() {
 	return ticks_0;
 }
 
-int CPU::jp_cc(bool condition) {
+int bCPU::jp_cc(bool condition) {
 	u8 nn_low = read_pc();
 	u8 nn_high = read_pc();
 
@@ -1251,7 +1251,7 @@ int CPU::jp_cc(bool condition) {
 	return ticks_8;
 }
 
-int CPU::jr_e() {
+int bCPU::jr_e() {
 	s8 e = (s8)read_pc();
 	u16 result = m_registers.pc + e;
 
@@ -1261,7 +1261,7 @@ int CPU::jr_e() {
 	return ticks_8;
 }
 
-int CPU::jr_cc(bool condition) {
+int bCPU::jr_cc(bool condition) {
 	s8 e = (s8)read_pc();
 	u16 result = m_registers.pc + e;
 
@@ -1275,7 +1275,7 @@ int CPU::jr_cc(bool condition) {
 	return ticks_4;
 }
 
-int CPU::call_nn() {
+int bCPU::call_nn() {
 	u8 nn_low = read_pc();
 	u8 nn_high = read_pc();
 
@@ -1296,7 +1296,7 @@ int CPU::call_nn() {
 	return ticks_20;
 }
 
-int CPU::call_cc(bool condition) {
+int bCPU::call_cc(bool condition) {
 	u8 nn_low = read_pc();
 	u8 nn_high = read_pc();
 
@@ -1321,7 +1321,7 @@ int CPU::call_cc(bool condition) {
 	return ticks_8;
 }
 
-int CPU::ret() {
+int bCPU::ret() {
 	u8 ret_low = read(m_registers.sp);
 	m_registers.sp += 1;
 	u8 ret_high = read(m_registers.sp);
@@ -1335,7 +1335,7 @@ int CPU::ret() {
 	return ticks_12;
 }
 
-int CPU::ret_cc(bool condition) {
+int bCPU::ret_cc(bool condition) {
 	idle_cycle();
 
 	if (condition) {
@@ -1355,7 +1355,7 @@ int CPU::ret_cc(bool condition) {
 	return ticks_4;
 }
 
-int CPU::reti() {
+int bCPU::reti() {
 	u8 ret_low = read(m_registers.sp);
 	m_registers.sp += 1;
 	u8 ret_high = read(m_registers.sp);
@@ -1365,12 +1365,12 @@ int CPU::reti() {
 
 	idle_cycle();
 	m_registers.pc = address;
-	ime = true;
+	m_cpu.ime = true;
 
 	return ticks_12;
 }
 
-int CPU::rst_n(u8 vector) {
+int bCPU::rst_n(u8 vector) {
 	u8 pc_low = m_registers.pc & 0xff;
 	u8 pc_high = m_registers.pc >> 8;
 
@@ -1387,34 +1387,34 @@ int CPU::rst_n(u8 vector) {
 }
 
 //misc instructions
-int CPU::halt() {
-	if (interrupt_pending != 0 && !ime) {
-		halt_bug = true;
-		halted = false;
+int bCPU::halt() {
+	if (m_cpu.interrupt_pending != 0 && !m_cpu.ime) {
+		m_cpu.halt_bug = true;
+		m_cpu.halted = false;
 
 		return ticks_0;
 	}
 
-	halted = true;
+	m_cpu.halted = true;
 
 	return ticks_0;
 }
 
-int CPU::stop() {
+int bCPU::stop() {
 	//double speed mode cgb
 	//not impl on sharpboy for dmg.
 
 	return ticks_0;
 }
 
-int CPU::ei() {
-	enable_ime = true;
+int bCPU::ei() {
+	m_cpu.enable_ime = true;
 
 	return ticks_0;
 }
 
-int CPU::di() {
-	ime = false;
+int bCPU::di() {
+	m_cpu.ime = false;
 
 	return ticks_0;
 }

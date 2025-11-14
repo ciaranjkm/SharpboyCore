@@ -11,6 +11,6 @@ add_library(SharpboyCore STATIC
 	
 	"src/CPU.cpp" 
     "src/Bus.cpp" 
-	"src/Timing.cpp"  "src/CPUIntr.cpp" "include/Utilities/Logger.h")
+	"src/Timing.cpp"  "src/CPUIntr.cpp" "include/Utilities/Logger.h" "include/bCPU.h" "src/bCPU.cpp" "include/testCPU.h" "src/testCPU.cpp")
 
 target_include_directories(SharpboyCore PUBLIC "include")

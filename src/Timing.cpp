@@ -23,7 +23,7 @@ void Timing::real_cycle() {
 }
 
 //sst
-void Timing::set_tester_ptr(SST_Tester* tester) {
+void Timing::set_tester_ptr(SST* tester) {
 	sst_tester = tester;
 }
 

@@ -2,9 +2,10 @@
 
 //INITIALISE FILEREADER AND OTHER DEPS
 SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, bool status_out, bool debug_out) {
-	update_logger(status_out, debug_out);
+	Logger::update_logger(status_out, debug_out);
 	
 	//initialise file reader
+	//todo fix this as well from above -> nullptr issues
 	fReader = std::make_unique<FileReader>(roms_path, boot_rom_path);
 	
 	if (!fReader->is_initialied()) {
@@ -23,15 +24,14 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, boo
 	m_core_context.initialised = true;
 	m_core_context.emu_ready = true;
 
-	msg_default("SharpboyCore created successfully");
+	Logger::log(log_default, "SharpboyCore created successfully]");
 }
 
 //DESTROY POINTERS AND CLEANUP
 SharpboyCore::~SharpboyCore() {
 	//delete cartridge object
 	m_cartridge.reset();
-
-	msg_status("Core destroyed successfully");
+	Logger::log(log_default, "Core destroyed successfully");
 }
 
 //GETTER
@@ -39,28 +39,11 @@ bool SharpboyCore::is_initialised() const {
 	return m_core_context.initialised;
 }
 
-//INITIALISE EMULATOR FOR SST RUN, REINITIALISE AFTER SST FINISH FOR A NEW INSTANCE
-//CLEANUP NEEDS TO BE CALLED PRIOR TO INITIALISING A NEW INSTANCE
-bool SharpboyCore::emu_init_for_sst() {
-	if (!m_core_context.emu_ready) {
-		msg_error("Instance not ready! Did you call cleanup?");
-		return false;
-	}
-
-	//create new sst cartridge and update bus pointer
-	m_cartridge.reset();
-	m_cartridge = std::make_unique<CartridgeSST>();
-	m_bus.set_sst_mode(m_cartridge.get());
-
-	msg_status("Initialised for SSTs");
-	return true;
-}
-
 //INITIALISATION FOR NORMAL SHARPBOY RUN, REINITIALISE FOR A NEW INSTANCE,
 //CLEANUP NEEDS TO BE CALLED PRIOR TO INITIALISING A NEW INSTANCE
 bool SharpboyCore::emu_init(std::string rom_file_name) {
 	if (!m_core_context.emu_ready) {
-		msg_error("Instance not ready! Did you call cleanup?");
+		Logger::log(log_error, "Instance not ready! Did you call cleanup?");
 		return false;
 	}
 
@@ -72,10 +55,10 @@ void SharpboyCore::cleanup() {
 	//reset components and destroy cart object
 	m_cartridge.reset();
 	m_bus.reset_sst_mode();
-	m_cpu.reset_sst();
+	m_cpu.reset();
 
 	m_core_context.emu_ready = true;
-	msg_status("Cleanup successful, ready for new instance");
+	Logger::log(log_status, "Cleanup successful, ready for new instance");
 }
 
 //execution
@@ -84,37 +67,27 @@ void SharpboyCore::cleanup() {
 
 //CAN BE RUN AS BACKGROUND THREAD WITH FLAG SET
 void SharpboyCore::run_ssts(std::string sst_path, bool background_thread) {
-	SST_Tester sst_tester = SST_Tester();
-	sst_tester.init(sst_path, m_cartridge.get(), &m_cpu);
-	if (!sst_tester.is_initialised()) {
-		return;
+	SST sst(sst_path, 0x00, false);
+
+	bool test_complete = false;
+	std::thread sst_thread = std::thread([&sst]() {sst.run(); });
+	sst_thread.detach();
+
+	while (!sst.is_test_complete()) {
+		Logger::log(log_sst_status, "completing ssts...");
+		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}
 
-	//RUN THE TESTS FOR UNPREFIXED OPCODES IN A SEPERATE THREAD
-	msg_status("SSTs running...");
-	if (!background_thread) {
-		int test_number = 0;
-		
-		while (test_number < SST_TEST_COUNT_NORMAL) {
-			sst_tester.run_test(false, test_number);
-			test_number++;
-
-			msg_sst_progress(false, test_number, SST_TEST_COUNT_NORMAL);
-		}	
+	if (sst_thread.joinable()) {
+		sst_thread.join();
 	}
-	else {
-		//THIS FUNCTION DOESNT CLOSE THIS THREAD
-		//HANDLE IN CLI OR GUI TO PICKUP AND CLOSE THREAD
 
-		//WHEN CLOSING THE THREAD
-		std::thread sst_thread = std::thread([&sst_tester]() {
-			for (int i = 0; i < SST_TEST_COUNT_NORMAL; i++) {
-				sst_tester.run_test(false, i);
-			}
-		});
+	std::array<s_test_result, SMALL_TEST_COUNT>* results = sst.get_results();
+	for (s_test_result result : *results) {
+		std::cout << result.msg << "\n";
 	}
-	
-	m_sst_context.sst_active.store(false);
+
+	results = nullptr;
 }
 
 //DEBUG 

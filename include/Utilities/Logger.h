@@ -1,60 +1,80 @@
 #pragma once
 
-#include <format>
 #include <iostream>
+#include <string>
+#include <format>
 
-struct s_logger {
-	bool status = false;
-	bool debug = false;
+enum e_log_type {
+    log_default,
+    log_error,
+    log_debug,
+    log_status,
+    log_sst_error,
+    log_sst_status,
 };
 
-static s_logger logger;
+class Logger {
+public:
+    static void update_logger(bool status_enabled, bool debug_enabled) {
+        status = status_enabled;
+        debug = debug_enabled;
+    }
 
-static inline void update_logger(bool status, bool debug) {
-	logger.status = status;
-	logger.debug = debug;
-}
+    static void log(e_log_type type, const std::string& msg) {
+        std::string prefix;
+        switch (type) {
+        case log_default:     
+            prefix = "[CORE] ";
+            break;
 
-static inline void msg_error(std::string message) {
-	std::string msg = std::format("[CORE::ERROR] {}\n", message);
-	std::cout << msg;
-}
+        case log_error:       
+            prefix = "[CORE::ERROR] "; 
+            break;
 
-static inline void msg_default(std::string message) {
-	std::string msg = std::format("[CORE] {}\n", message);
-	std::cout << msg;
-}
+        case log_debug:
+            if (!debug) {
+                return;
+            }
+            prefix = "[CORE::DEBUG] ";
+            break;
 
-static inline void msg_debug(std::string message) {
-	if (!logger.debug) {
-		return;
-	}
+        case log_status:
+            if (!status) {
+                return;
+            }
+            prefix = "[CORE] ";
+            break;
 
-	std::string msg = std::format("[CORE::DEBUG] {}\n", message);
-	std::cout << msg;
-}
+        case log_sst_error:   
+            prefix = "[C/SST:ERROR] "; 
+            break;
 
-static inline void msg_status(std::string message) {
-	if (!logger.status) {
-		return;
-	}
+        case log_sst_status: 
+            prefix = "[C/SST] "; 
+            break;
 
-	std::string msg = std::format("[CORE] {}\n", message);
-	std::cout << msg;
-}
+        default:              
+            prefix = "[CORE] "; 
+            break;
+        }
 
-static inline void msg_sst_error(std::string message) {
-	std::string msg = std::format("[C/SST:ERROR] {}\n", message);
-	std::cout << msg;
-}
+        std::cout << std::format("{}{}\n", prefix, msg);
+    }
 
-static inline void msg_sst_status(std::string message) {
-	std::string msg = std::format("[C/SST] {}\n", message);
-	std::cout << msg;
-}
+    static void log_sst_progress(bool is_cb, int test_number, int test_total) {
+        float complete_per = (static_cast<float>(test_number) / test_total) * 100.0f;
+        std::cout << std::format(
+            "[C/SST] Progress: {}%  Test Number: {}{}\n",
+            static_cast<int>(complete_per),
+            is_cb ? "CB " : "",
+            test_number
+        );
+    }
 
-static inline void msg_sst_progress(bool prefix, int test_number, int test_total) {
-	float complete_per = ((float)test_number / (float)test_total) * 100.0f;
-	std::string msg = std::format("[C/SST] Progress : {}% Test Number: {}\n", (int)complete_per, test_number);
-	std::cout << msg;
-}
+private:
+    static bool status;
+    static bool debug;
+};
+
+inline bool Logger::status = false;
+inline bool Logger::debug = false;

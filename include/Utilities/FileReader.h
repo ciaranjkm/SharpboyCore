@@ -18,7 +18,7 @@ class FileReader {
 public:
 	FileReader(std::string rom_path, std::string boot_rom_path) {
 		if (rom_path.empty() || boot_rom_path.empty()) {
-			msg_error("Rom path or boot rom path not found");
+			Logger::log(log_error, "Rom path or boot rom path not found");
 			return;
 		}
 
@@ -40,27 +40,27 @@ private:
 private:
 	//CHECK IF ROMS DIR EXISTS AND ATTEMPT TO CREATE IT, RETURN TRUE IF DIR FOUND
 	inline bool roms_directory_check(std::string rom_path, std::string boot_rom_path) {
-		msg_debug("Checking ROM directory exists");
+		Logger::log(log_debug, "Checking ROM directory exists");
 		if (!std::filesystem::exists(rom_path)) {
-			msg_error("Failed finding ROM directory. Creating one");
+			Logger::log(log_error, "Failed finding ROM directory. Creating one");
 
 			if (!std::filesystem::create_directory(rom_path)) {
-				msg_error("Failed to create a new ROM directory");
+				Logger::log(log_error, "Failed to create a new ROM directory");
 				return false;
 			}
 		}
 
-		msg_debug("Found ROM directory. Checking BOOT ROM directory");
+		Logger::log(log_debug, "Found ROM directory. Checking BOOT ROM directory");
 		if (!std::filesystem::exists(boot_rom_path)) {
-			msg_error("Failed finding BOOT ROM directory. Creating one");
+			Logger::log(log_error, "Failed finding BOOT ROM directory. Creating one");
 
 			if (!std::filesystem::create_directory(boot_rom_path)) {
-				msg_error("Failed to create a new BOOT ROM directory");
+				Logger::log(log_error, "Failed to create a new BOOT ROM directory");
 				return false;
 			}
 		}
 
-		msg_debug("FOUND BOOT ROMS DIRECTORY");
+		Logger::log(log_debug, "FOUND BOOT ROMS DIRECTORY");
 		return true;
 	}
 };

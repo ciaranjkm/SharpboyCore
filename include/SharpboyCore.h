@@ -35,7 +35,6 @@ public:
 	bool is_initialised() const;
 	void cleanup();
 
-	bool emu_init_for_sst();
 	bool emu_init(std::string rom_file_name);
 
 	//RUN

@@ -1,52 +1,40 @@
 #pragma once
 #include <format>
+#include <filesystem>
+#include <atomic>
 
 #include "NlohmannJSON/json.hpp"
 #include "SST_Defs.h"
 #include "FileReader.h"
-#include "Common.h"
-#include "Logger.h"
 
-class Cartridge;
-class CartridgeSST;
-class CPU;
+#include "../testCPU.h"
 
-class SST_Tester {
+const int SMALL_TEST_COUNT = 256;
+
+class SST {
 public:
-	//CONS DEST
-	~SST_Tester();
-
-	//INITIALISATION
-	void init(std::string sst_path, Cartridge* cartridge_ptr, CPU* cpu_ptr);
-	bool is_initialised() const;
-
+	SST(std::string sst_path, int start_test, bool prefixed);
+	~SST();
+	
 	//EXECUTION
-	bool check_test_exists(bool prefix, int test_opcode);
-	bool run_test(bool prefix, int test_opcode);
+	void run();
 
 	//RESULTS
-	void clear_test_results();
-	std::vector<s_test_result>* get_results();
-
-	//CYCLES
-	void add_cycle(bool idle, u16 address = 0x0000, u8 value = 0x00, std::string op = "");
-	void reset_cycles();
+	std::array<s_test_result, SMALL_TEST_COUNT>* get_results();
+	bool is_test_complete() const;
 
 private:
-	//MEMBER VARIABLES
-	bool m_test_initialised = false;
-	std::string m_sst_dir_path = "";
+	std::atomic_bool initialised = false;
+	std::atomic_bool completed_tests = false;
 
-	//PTR TO COMPONENTS
-	CartridgeSST* m_cart = nullptr;
-	CPU* m_cpu = nullptr;
+	std::unique_ptr<testCPU> tCPU = nullptr;
 
-	//TEST DATA
-	std::unique_ptr<s_test_case> m_test_case = nullptr;
-	std::vector<s_test_result> m_test_results = std::vector<s_test_result>();
-	std::vector<s_test_cycle> m_subtest_cycles = std::vector<s_test_cycle>();
+	std::string sst_path = "";
+	int start_test = 0;
+	bool prefixed = false;
+
+	std::array<s_test_result, SMALL_TEST_COUNT> m_results = std::array<s_test_result, SMALL_TEST_COUNT>();
 
 private:
-	//MEMBER FUNCTIONS
-	void init_reset();
+
 };

@@ -11,3 +11,8 @@ Currently supported:
 
 - SST single step tests for Game Boy (passed)
 - Console output lol
+
+TODO::
+	make sure everything is documented well at this stage before it gets complicated
+	reduce functions that are too big and remove unnecessary code / public functions
+	think about api and working into the cli project and get that started
