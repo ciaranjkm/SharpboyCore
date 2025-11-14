@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(SharpboyCore STATIC
 	"src/SharpboyCore.cpp"
-	"src/Cartridges/SST_Cartridge.cpp"  
+	  
 	"src/Utilities/Testing.cpp" 
 	
 	"src/CPU.cpp" 

@@ -38,7 +38,7 @@ public:
 	bool emu_init(std::string rom_file_name);
 
 	//RUN
-	void run_ssts(std::string sst_path, bool background_thread);
+	void run_ssts(std::string sst_path, bool show_all_results, bool prefixed);
 	void run();
 
 	//DEBUG

@@ -1,5 +1,6 @@
 #include "../include/Utilities/Testing.h"
 
+//INITIALISATION
 SST::SST(std::string sst_path, int start_test, bool prefixed) {
 	initialised.store(false);
 	
@@ -28,6 +29,7 @@ SST::~SST() {
 	tCPU = nullptr;
 }
 
+//EXECUTION
 void SST::run() {
 	if (!initialised.load()) {
 		//failed init cant run
@@ -43,14 +45,15 @@ void SST::run() {
 		result.test_num = start_test + i;
 		result.prefixed = prefixed;
 		result.msg = std::format("TEST PASSED OPCODE: {}", start_test + i);
+		completed_tests_count++;
 
 		//CHECK FOR TEST FILE AND READ IT
 		std::string test_file_name = std::format("{}", prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i]);
 		if (test_file_name == invalid_json_file_name) {
 			result.msg = std::format("INVALID OPCODE {}", start_test + i);
+			result.result = false;
 			continue;
 		}
-
 		
 		std::string file_name = std::format("{}/{}", sst_path, test_file_name);
 
@@ -128,6 +131,11 @@ void SST::run() {
 	}
 
 	completed_tests.store(true);
+}
+
+//RESULTS
+int SST::get_completed_tests_count() const {
+	return completed_tests_count.load();
 }
 
 std::array<s_test_result, SMALL_TEST_COUNT>* SST::get_results() {
