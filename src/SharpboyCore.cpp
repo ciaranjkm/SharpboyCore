@@ -75,7 +75,7 @@ void SharpboyCore::run_ssts(std::string sst_path, bool show_all_results, bool pr
 		std::string msg = std::format("Completing SSTs, progess: {}%", (int)progess);
 		Logger::log(log_sst_status, msg);
 
-		std::this_thread::sleep_for(std::chrono::seconds(3));
+		std::this_thread::sleep_for(std::chrono::milliseconds(300));
 	}
 
 	if (sst_thread.joinable()) {

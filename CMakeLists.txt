@@ -6,11 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(SharpboyCore STATIC
 	"src/SharpboyCore.cpp"
-	  
-	"src/Utilities/Testing.cpp" 
+	"src/Utilities/SST.cpp" 
 	
 	"src/CPU.cpp" 
+	"src/bCPU.cpp"
+	"src/testCPU.cpp"
     "src/Bus.cpp" 
-	"src/Timing.cpp"  "src/CPUIntr.cpp" "include/Utilities/Logger.h" "include/bCPU.h" "src/bCPU.cpp" "include/testCPU.h" "src/testCPU.cpp")
+	"src/Timing.cpp"  
+	"src/CPUIntr.cpp" 
+)
 
-target_include_directories(SharpboyCore PUBLIC "include")
+target_include_directories(SharpboyCore PUBLIC "include" "include/Utilities")

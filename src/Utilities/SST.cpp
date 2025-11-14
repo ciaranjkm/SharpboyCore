@@ -1,4 +1,4 @@
-#include "../include/Utilities/Testing.h"
+#include "../include/Utilities/SST.h"
 
 //INITIALISATION
 SST::SST(std::string sst_path, int start_test, bool prefixed) {
@@ -44,7 +44,7 @@ void SST::run() {
 		s_test_result& result = m_results[i];
 		result.test_num = start_test + i;
 		result.prefixed = prefixed;
-		result.msg = std::format("TEST PASSED OPCODE: {}", start_test + i);
+		result.msg = std::format("TEST PASSED: {}", prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i]);
 		completed_tests_count++;
 
 		//CHECK FOR TEST FILE AND READ IT

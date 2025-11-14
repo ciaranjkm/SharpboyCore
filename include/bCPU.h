@@ -3,8 +3,17 @@
 #include "InstrDefs.h"
 
 struct s_registers {
-	u8 a, f, b, c, d, e, h, l;
-	u16 pc, sp;
+	u8 a = 0x00;
+	u8 f = 0x00;
+	u8 b = 0x00;
+	u8 c = 0x00;
+	u8 d = 0x00;
+	u8 e = 0x00;
+	u8 h = 0x00;
+	u8 l = 0x00;
+
+	u16 pc = 0x0000;
+	u16 sp = 0x0000;
 };
 
 enum e_flags {
@@ -41,8 +50,8 @@ public:
 
 protected:
 	//BASE CPU MEMBER VARIABLES
-	s_registers m_registers;
-	s_cpu_context m_cpu;
+	s_registers m_registers = {};
+	s_cpu_context m_cpu = {};
 
 private:
 	//BASE MEMBER FUNCTIONS
@@ -184,5 +193,4 @@ private:
 	int stop();
 	int ei();
 	int di();
-
 };
