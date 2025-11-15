@@ -6,7 +6,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(SharpboyCore STATIC
 	"src/SharpboyCore.cpp"
+
 	"src/Utilities/SST.cpp" 
+	"src/Utilities/FileReader.cpp"
 	
 	"src/CPU/CPU.cpp" 
 	"src/CPU/bCPU.cpp"
@@ -15,6 +17,6 @@ add_library(SharpboyCore STATIC
 
     "src/Bus.cpp" 
 	"src/Timing.cpp"  
-)
+ "include/Cartridges/CartMBC0.h" "src/Cartridges/CartMBC0.cpp" "src/Cartridges/Cartridge.cpp")
 
 target_include_directories(SharpboyCore PUBLIC "include")

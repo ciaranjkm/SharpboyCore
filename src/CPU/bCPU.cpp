@@ -11,8 +11,13 @@ int bCPU::execute_next_instruction() {
 }
 
 //todo make reset based on boot rom or not
-void bCPU::reset() {
-	m_registers = {};
+void bCPU::reset(bool using_boot_rom) {
+	if (!using_boot_rom) {
+		m_registers = {};
+		return;
+	}
+
+	m_registers = POST_BOOT_ROM_REGS;
 }
 
 s_registers* bCPU::get_registers() {

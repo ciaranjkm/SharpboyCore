@@ -16,6 +16,19 @@ struct s_registers {
 	u16 sp = 0x0000;
 };
 
+const s_registers POST_BOOT_ROM_REGS = {
+	.a = 0x01,
+	.f = 0xb0,
+	.c = 0x13,
+	.d = 0x00,
+	.e = 0xd8,
+	.h = 0x01,
+	.l = 0x4d,
+
+	.pc = 0x0100,
+	.sp = 0xfffe
+};
+
 enum e_flags {
 	NO_FLAG = -1,
 	fZERO = 7,
@@ -45,7 +58,7 @@ class bCPU {
 public:
 	//BASE FUNCTIONS FOR CPU OPERATION
 	int execute_next_instruction();
-	void reset();
+	void reset(bool using_boot_rom);
 	s_registers* get_registers();
 
 protected:
