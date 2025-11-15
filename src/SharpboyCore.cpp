@@ -11,6 +11,14 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, std
 		return;
 	}
 
+	//create imu object, reset when creating a new instance
+	m_imu = std::make_unique<IMU>();
+	if (!m_imu) {
+		Logger::log(log_error, "Failed to create Internal Memory Unit object. Exiting");
+		m_core_context.initialised = false;
+		return;
+	}
+
 	//set pointers for cpu 
 	m_cpu.set_bus_ptr(&m_bus);
 	m_cpu.set_timing_ptr(&m_timing);
@@ -30,6 +38,10 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, std
 SharpboyCore::~SharpboyCore() {
 	//delete cartridge object
 	m_cartridge.reset();
+
+	//delete imu object
+	m_imu.reset();
+
 	Logger::log(log_default, "Core destroyed successfully");
 }
 
@@ -83,8 +95,12 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 		m_cartridge->swap_boot_rom_buffer();
 	}
 
+	//RESET IMU
+	m_imu->reset();
+
 	//UPDATE BUS PTRS ON REINIT TO STOP NULLPTR
 	m_bus.update_cartridge_ptr(m_cartridge.get());
+	m_bus.update_imu_ptr(m_imu.get());
 
 	//RESET CPU
 	m_cpu.reset(m_core_context.using_boot_rom);
@@ -97,16 +113,21 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 void SharpboyCore::cleanup() {
 	//reset components and destroy cart object
 	m_cartridge.reset();
+
 	m_bus.update_cartridge_ptr(nullptr);
+	m_bus.update_imu_ptr(nullptr);
+
 	m_cpu.reset(false);
+	m_imu->reset();
 
 	m_core_context.emu_ready = true;
 	Logger::log(log_status, "Cleanup successful, ready for new instance");
 }
 
+//DEBUG + SST
 /*
 	EXECUTE ALL SINGLE STEP TESTS FOR NORMAL AND PREFIXED OPCODES (HALT, STOP, ILLEGAL NOT INCL.) PROOF OF CONCEPT REALLY
-	USES THE SST PATH IN FILEREADER STATIC OBJECT, MAKE SURE IT IS UPDATED BEFORE RUNNING
+	USES THE SST PATH IN FILEREADER STATIC OBJECT, MAKE SURE IT IS UPDATED BEFORE RUNNING OR ALL FAILS
 */
 void SharpboyCore::run_ssts(bool show_all_results, bool prefixed) {
 	SST sst(FileReader::get_path(path_sst), 0x00, prefixed);
@@ -159,7 +180,6 @@ void SharpboyCore::run_ssts(bool show_all_results, bool prefixed) {
 	results = nullptr;
 }
 
-//DEBUG 
 s_core_context* SharpboyCore::get_core_context() {
 	return &m_core_context;
 }

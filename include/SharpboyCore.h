@@ -26,24 +26,29 @@ struct s_core_sst_context {
 	std::atomic_bool sst_active = false;
 };
 
+/*
+	This is the main class used to create an emulator instance everything is handled for you here in the public api.
+	Give paths to Sharpboy on construction or use FileReader static object to update the paths -> updates FileReader in const
+*/
+
 class SharpboyCore {
 public:
 	//CONS | DEST
 	SharpboyCore(std::string roms_path, std::string boot_rom_path, std::string sst_path = "", bool status_out = true, bool debug_out = false);
 	~SharpboyCore();
 
-	//INIT SHUDOWN
+	//RETURN IS SHARPBOY INITIALISED SUCCESSFULLY
 	bool is_initialised() const;
 
-	//INSTANCE INIT CLEANUP
+	//START AND CLEANUP AN EMULATOR INSTANCE
 	bool emu_init(std::string rom_file_name, bool using_boot_rom);
 	void cleanup();
 
-	//INSTANCE RUN
-	void run_ssts(bool show_all_results, bool prefixed);
+	//RUN TO BE CALLED IN THE MAIN LOOP
 	void run();
 
-	//DEBUG
+	//DEBUG + SST
+	void run_ssts(bool show_all_results, bool prefixed);
 	s_core_context* get_core_context();
 
 private:
@@ -52,7 +57,8 @@ private:
 	s_core_sst_context m_sst_context;
 
 	//EMU COMPONENTS
-	std::unique_ptr<CartMBC0> m_cartridge;
+	std::unique_ptr<Cartridge> m_cartridge = nullptr;
+	std::unique_ptr<IMU> m_imu = nullptr;
 	CPU m_cpu;
 	Bus m_bus;
 
