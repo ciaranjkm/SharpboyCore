@@ -17,6 +17,10 @@ add_library(SharpboyCore STATIC
 
     "src/Bus.cpp" 
 	"src/Timing.cpp"  
- "include/Cartridges/CartMBC0.h" "src/Cartridges/CartMBC0.cpp" "src/Cartridges/Cartridge.cpp" "include/IMU.h" "src/IMU.cpp")
+	"src/IMU.cpp" 
+
+	"src/Cartridges/CartMBC0.cpp" 
+	"src/Cartridges/Cartridge.cpp" 
+ "include/PPU.h" "src/PPU.cpp")
 
 target_include_directories(SharpboyCore PUBLIC "include")

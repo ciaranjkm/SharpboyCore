@@ -11,21 +11,17 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, std
 		return;
 	}
 
-	//create imu object, reset when creating a new instance
-	m_imu = std::make_unique<IMU>();
-	if (!m_imu) {
-		Logger::log(log_error, "Failed to create Internal Memory Unit object. Exiting");
-		m_core_context.initialised = false;
-		return;
-	}
-
 	//set pointers for cpu 
 	m_cpu.set_bus_ptr(&m_bus);
 	m_cpu.set_timing_ptr(&m_timing);
 
 	//attach components to the timing manager :: todo this will sync the emulator to the audio buffer eventually
 	//gather up cycles for a second of audio then play the audio while gathering the next second
-	m_timing.attach_components(&m_cpu);
+	m_timing.attach_components(&m_cpu, &m_ppu);
+
+	//attach components to the bus
+	m_bus.update_imu_ptr(&m_imu);
+	m_bus.update_ppu_ptr(&m_ppu);
 
 	//init and ready to start new emu instance
 	m_core_context.initialised = true;
@@ -38,9 +34,6 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, std
 SharpboyCore::~SharpboyCore() {
 	//delete cartridge object
 	m_cartridge.reset();
-
-	//delete imu object
-	m_imu.reset();
 
 	Logger::log(log_default, "Core destroyed successfully");
 }
@@ -95,12 +88,9 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 		m_cartridge->swap_boot_rom_buffer();
 	}
 
-	//RESET IMU
-	m_imu->reset();
 
-	//UPDATE BUS PTRS ON REINIT TO STOP NULLPTR
+	//UPDATE BUS PTR TO CART ON REINIT TO STOP NULLPTR
 	m_bus.update_cartridge_ptr(m_cartridge.get());
-	m_bus.update_imu_ptr(m_imu.get());
 
 	//RESET CPU
 	m_cpu.reset(m_core_context.using_boot_rom);
@@ -115,10 +105,9 @@ void SharpboyCore::cleanup() {
 	m_cartridge.reset();
 
 	m_bus.update_cartridge_ptr(nullptr);
-	m_bus.update_imu_ptr(nullptr);
 
 	m_cpu.reset(false);
-	m_imu->reset();
+	m_imu.reset();
 
 	m_core_context.emu_ready = true;
 	Logger::log(log_status, "Cleanup successful, ready for new instance");

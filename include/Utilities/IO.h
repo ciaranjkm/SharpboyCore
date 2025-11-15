@@ -1,0 +1,52 @@
+#pragma once
+
+enum e_io {
+	io_joyp = 0xff00,
+	io_sb = 0xff01,
+	io_sc = 0xff02,
+
+	io_div = 0xff04,
+	io_tima = 0xff05,
+	io_tma = 0xff06,
+	io_tac = 0xff07,
+
+	io_nr10 = 0xff10,
+	io_nr11 = 0xff11,
+	io_nr12 = 0xff12,
+	io_nr13 = 0xff13,
+	io_nr14 = 0xff14,
+	io_nr21 = 0xff16,
+	io_nr22 = 0xff17,
+	io_nr23 = 0xff18,
+	io_nr24 = 0xff19,
+	io_nr30 = 0xff1a,
+	io_nr31 = 0xff1b,
+	io_nr32 = 0xff1c,
+	io_nr33 = 0xff1d,
+	io_nr34 = 0xff1e,
+	io_nr41 = 0xff20,
+	io_nr42 = 0xff21,
+	io_nr43 = 0xff22,
+	io_nr44 = 0xff23,
+	io_nr50 = 0xff24,
+	io_nr51 = 0xff25,
+	io_nr52 = 0xff26,
+
+	io_lcdc = 0xff40,
+	io_stat = 0xff41,
+	io_scy = 0xff42,
+	io_scx = 0xff43,
+	io_ly = 0xff44,
+	io_lyc = 0xff45,
+	io_dma = 0xff46,
+	io_bgp = 0xff47,
+	io_obp0 = 0xff48,
+	io_obp1 = 0xff49,
+	io_wy = 0xff4a,
+	io_wx = 0xff4b,
+
+	io_bank = 0xff50,
+
+	io_if = 0xff0f,
+	io_ie = 0xffff //not really io but so what
+};

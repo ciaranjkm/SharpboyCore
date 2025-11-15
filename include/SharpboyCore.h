@@ -12,8 +12,10 @@
 
 #include "CPU/CPU.h"
 #include "Bus.h"
+#include "PPU.h"
 #include "Cartridges/CartDefs.h"
 #include "Timing.h"
+#include "Joypad.h"
 
 struct s_core_context {
 	bool initialised = false;
@@ -47,6 +49,10 @@ public:
 	//RUN TO BE CALLED IN THE MAIN LOOP
 	void run();
 
+	//JOYPAD
+	void set_new_joypad_state(s_joypad_state state);
+	s_joypad_state* get_joypad_state();
+
 	//DEBUG + SST
 	void run_ssts(bool show_all_results, bool prefixed);
 	s_core_context* get_core_context();
@@ -58,9 +64,10 @@ private:
 
 	//EMU COMPONENTS
 	std::unique_ptr<Cartridge> m_cartridge = nullptr;
-	std::unique_ptr<IMU> m_imu = nullptr;
+	IMU m_imu;
 	CPU m_cpu;
 	Bus m_bus;
+	PPU m_ppu;
 
 	//TIMING FOR THE SYSTEM
 	Timing m_timing;

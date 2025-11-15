@@ -35,6 +35,8 @@ enum e_path_type {
 	path_sst,
 };
 
+const std::string settings_file_name = "settings.txt";
+
 class FileReader {
 public:
 	//GETTERS + SETTERS
@@ -44,7 +46,6 @@ public:
 	static void update_path(e_path_type type, std::string path);
 	static std::string get_path(e_path_type type);
 
-	static void startup_dir_check();
 	static bool check_exists(std::string path);
 
 	//FILE READING

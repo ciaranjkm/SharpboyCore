@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Utilities/Common.h"
+#include "Utilities/IO.h"
+#include "Joypad.h"
 #include <array>
 
 /*
@@ -22,11 +24,14 @@ public:
 	u8 read(u16 address);
 	void write(u16 address, u8 value);
 
+	void update_joypad(s_joypad_state new_joypad_state);
+
 private:
 	std::array<u8, WRAM_SIZE> m_wram = std::array<u8, WRAM_SIZE>();
 	std::array<u8, HRAM_SIZE> m_hram = std::array<u8, HRAM_SIZE>();
 
 	s_imu_io m_io = {};
+	s_joypad_state m_joypad_state = {};
 
 private:
 	u8 read_io(u16 address);
