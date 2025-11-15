@@ -1,4 +1,4 @@
-#include "../include/Utilities/SST.h"
+#include <Utilities/SST.h>
 
 //INITIALISATION
 SST::SST(std::string sst_path, int start_test, bool prefixed) {

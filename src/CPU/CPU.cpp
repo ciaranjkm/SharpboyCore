@@ -1,5 +1,5 @@
-#include "../include/CPU.h"
-#include "../include/Timing.h"
+#include <CPU/CPU.h>
+#include <Timing.h>
 
 CPU::~CPU() {
 	m_bus = nullptr;

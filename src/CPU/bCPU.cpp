@@ -1,4 +1,4 @@
-#include "../include/bCPU.h"
+#include <CPU/bCPU.h>
 
 //BASE CPU FUNCTIONS FOR OPERATION
 

@@ -1,9 +1,6 @@
 #pragma once
-
-#include "Utilities/Common.h"
 #include <vector>
-
-//gb cartridge base class and single step test class, inherit from this for different mbc types
+#include "Utilities/Common.h"
 
 enum e_cart_types {
 	CART_NONE,

@@ -8,12 +8,13 @@ add_library(SharpboyCore STATIC
 	"src/SharpboyCore.cpp"
 	"src/Utilities/SST.cpp" 
 	
-	"src/CPU.cpp" 
-	"src/bCPU.cpp"
-	"src/testCPU.cpp"
+	"src/CPU/CPU.cpp" 
+	"src/CPU/bCPU.cpp"
+	"src/CPU/testCPU.cpp"
+	"src/CPU/CPUIntr.cpp" 
+
     "src/Bus.cpp" 
 	"src/Timing.cpp"  
-	"src/CPUIntr.cpp" 
 )
 
-target_include_directories(SharpboyCore PUBLIC "include" "include/Utilities")
+target_include_directories(SharpboyCore PUBLIC "include")

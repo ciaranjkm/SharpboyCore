@@ -3,11 +3,11 @@
 #include <filesystem>
 #include <atomic>
 
+#include "../CPU/testCPU.h"
+
 #include "NlohmannJSON/json.hpp"
 #include "SST_Defs.h"
 #include "FileReader.h"
-
-#include "../testCPU.h"
 
 const int SMALL_TEST_COUNT = 256;
 

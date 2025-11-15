@@ -1,5 +1,4 @@
-#include "../include/Timing.h"
-#include "../include/CPU.h"
+#include <Timing.h>
 
 Timing::~Timing() {
 	m_cpu = nullptr;

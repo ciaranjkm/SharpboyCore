@@ -1,4 +1,4 @@
-#include "../include/SharpboyCore.h"
+#include <SharpboyCore.h>
 
 //INITIALISE FILEREADER AND OTHER DEPS
 SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, bool status_out, bool debug_out) {
@@ -62,6 +62,7 @@ void SharpboyCore::cleanup() {
 }
 
 //EXECUTE ALL SINGLE STEP TESTS FOR NORMAL AND PREFIXED OPCODES (HALT, STOP, ILLEGAL NOT INCL.) PROOF OF CONCEPT REALLY
+//THIS FUNCTION IS SLOW IN DEBUG MODE (30S +) RELEASE MODE (LESS THAN 5 SECONDS)
 void SharpboyCore::run_ssts(std::string sst_path, bool show_all_results, bool prefixed) {
 	SST sst(sst_path, 0x00, prefixed);
 

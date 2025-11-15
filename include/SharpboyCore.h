@@ -10,7 +10,7 @@
 #include "Utilities/SST.h"
 #include "Utilities/Logger.h"
 
-#include "CPU.h"
+#include "CPU/CPU.h"
 #include "Bus.h"
 #include "Cartridges/CartDefs.h"
 #include "Timing.h"

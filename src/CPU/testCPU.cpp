@@ -1,4 +1,4 @@
-#include "../include/testCPU.h"
+#include <CPU/testCPU.h>
 
 //TEST INITIALISTION
 void testCPU::reset_for_next_test() {

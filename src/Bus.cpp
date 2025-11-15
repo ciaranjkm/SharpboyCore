@@ -1,5 +1,5 @@
-#include "../include/Bus.h"
-#include "../include/Cartridges/Cartridge.h"
+#include <Bus.h>
+#include <Cartridges/Cartridge.h>
 
 //PUBLIC FUNCTIONS
 

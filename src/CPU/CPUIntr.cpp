@@ -1,4 +1,4 @@
-#include "../include/bCPU.h"
+#include <CPU/bCPU.h>
 
 //8 bit load instructions
 
