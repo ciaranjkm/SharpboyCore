@@ -68,8 +68,7 @@ void SST::run() {
 		test.close();
 		
 		//LOOP 1000 TIMES
-		const auto& test_cases = test_json.array();
-		for (const auto& test_case : test_cases) {
+		for (const auto& test_case : test_json) {
 			tCPU->reset_for_next_test();
 
 			result.msg = test_case["name"].get<std::string>();
@@ -128,6 +127,8 @@ void SST::run() {
 			tCPU->execute_next_instruction();
 			tCPU->get_test_result(result, final_regs, final_mem, final_cycles);
 		}
+
+		m_results[i] = result;
 	}
 
 	completed_tests.store(true);
