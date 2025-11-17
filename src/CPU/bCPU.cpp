@@ -1,10 +1,16 @@
 #include <CPU/bCPU.h>
+#include <format>
 
 //BASE CPU FUNCTIONS FOR OPERATION
 
 int bCPU::execute_next_instruction() {
 	int cycles = 0;
 	u8 opcode = read_pc();
+
+	/*
+	printf("OP: 0x%02X A: 0x%02X F: 0x%02X B: 0x%02X C: 0x%02X D: 0x%02X E: 0x%02X H: 0x%02X L: 0x%02X PC: 0x%04X SP: 0x%04X\n",
+		opcode, m_registers.a, m_registers.f, m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l, m_registers.pc, m_registers.sp);
+	*/
 
 	cycles = execute_opcode(opcode);
 	return cycles;
@@ -315,6 +321,9 @@ int bCPU::execute_opcode(u8 opcode) {
 
 int bCPU::execute_cb_opcode(int cycles) {
 	int cycles_cb = cycles;
+
+	//TODO THIS
+	//LMAO NO WONDER IT DIDNT WORK
 
 	u8 cb_opcode = read_pc();
 

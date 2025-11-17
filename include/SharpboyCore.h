@@ -10,11 +10,12 @@
 #include "Utilities/SST.h"
 #include "Utilities/Logger.h"
 
+#include "Sync.h"
 #include "CPU/CPU.h"
 #include "Bus.h"
 #include "PPU.h"
+#include "Timer.h"
 #include "Cartridges/CartDefs.h"
-#include "Timing.h"
 #include "Joypad.h"
 
 struct s_core_context {
@@ -68,9 +69,10 @@ private:
 	CPU m_cpu;
 	Bus m_bus;
 	PPU m_ppu;
+	Timer m_timer;
 
 	//TIMING FOR THE SYSTEM
-	Timing m_timing;
+	Syncroniser m_syncroniser;
 
 private:
 	//MEMBER FUNCTIONS

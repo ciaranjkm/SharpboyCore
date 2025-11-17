@@ -5,6 +5,7 @@
 #include "Cartridges/Cartridge.h"
 #include "IMU.h"
 #include "PPU.h"
+#include "Timer.h"
 
 class Bus {
 public:
@@ -15,6 +16,7 @@ public:
 	void update_cartridge_ptr(Cartridge* cart);
 	void update_imu_ptr(IMU* imu);
 	void update_ppu_ptr(PPU* ppu);
+	void update_timer_ptr(Timer* timer);
 
 	//MEMORY ACCESS AND REDIRECTION
 	u8 read(u16 address);
@@ -28,4 +30,5 @@ private:
 	Cartridge* m_cart = nullptr;
 	IMU* m_imu = nullptr;
 	PPU* m_ppu = nullptr;
+	Timer* m_timer = nullptr;
 };

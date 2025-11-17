@@ -13,15 +13,16 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, std
 
 	//set pointers for cpu 
 	m_cpu.set_bus_ptr(&m_bus);
-	m_cpu.set_timing_ptr(&m_timing);
+	m_cpu.set_timing_ptr(&m_syncroniser);
 
 	//attach components to the timing manager :: todo this will sync the emulator to the audio buffer eventually
 	//gather up cycles for a second of audio then play the audio while gathering the next second
-	m_timing.attach_components(&m_cpu, &m_ppu);
+	m_syncroniser.attach_components(&m_cpu, &m_ppu);
 
 	//attach components to the bus
 	m_bus.update_imu_ptr(&m_imu);
 	m_bus.update_ppu_ptr(&m_ppu);
+	m_bus.update_timer_ptr(&m_timer);
 
 	//init and ready to start new emu instance
 	m_core_context.initialised = true;
@@ -111,6 +112,11 @@ void SharpboyCore::cleanup() {
 
 	m_core_context.emu_ready = true;
 	Logger::log(log_status, "Cleanup successful, ready for new instance");
+}
+
+//RUN TO BE CALLED IN THE MAIN LOOP
+void SharpboyCore::run() {
+	m_syncroniser.advance_cycles();
 }
 
 //DEBUG + SST

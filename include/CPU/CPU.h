@@ -5,7 +5,7 @@
 #include "bCPU.h"
 #include "Bus.h"
 
-class Timing;
+class Syncroniser;
 
 class CPU : public bCPU{
 public:
@@ -13,11 +13,11 @@ public:
 
 	//initialisation
 	bool set_bus_ptr(Bus* bus);
-	bool set_timing_ptr(Timing* timing);
+	bool set_timing_ptr(Syncroniser* syncroniser);
 
 private:
 	Bus* m_bus = nullptr;
-	Timing* m_timing = nullptr;
+	Syncroniser* m_syncroniser = nullptr;
 
 private:
 	//VIRTUAL FUNCTIONS

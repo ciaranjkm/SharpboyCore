@@ -56,12 +56,10 @@ u8 IMU::read_io(u16 address) {
 		return convert_to_joypad_value(m_joypad_state);
 
 	case io_sb:
-
-		return 0xff;
+		return m_io.sb;
 
 	case io_sc:
-
-		return 0xff;
+		return m_io.sc;
 
 	default:
 		return 0xff;
@@ -70,9 +68,25 @@ u8 IMU::read_io(u16 address) {
 
 void IMU::write_io(u16 address, u8 value) {
 	switch (address) {
-	case 0xffff:
+	case io_ie:
 		m_io.IE = value & 0x1f;
 		return;
+
+	case io_sb:
+		m_io.sb = value;
+		return;
+
+	case io_sc:
+		m_io.sc = value;
+            if (value & 0x80) {
+				char c = static_cast<char>(m_io.sb);
+				std::cout << c;
+				std::cout.flush();
+
+
+				m_io.sc &= ~0x80;
+            }
+            break;
 
 	default:
 		return;

@@ -15,6 +15,8 @@ const int HRAM_SIZE = 0x7f;
 
 struct s_imu_io {
 	u8 IE = 0x00;
+	u8 sb = 0x00;
+	u8 sc = 0x00;
 };
 
 class IMU {

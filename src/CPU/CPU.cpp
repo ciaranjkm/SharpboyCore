@@ -1,9 +1,9 @@
 #include <CPU/CPU.h>
-#include <Timing.h>
+#include <Sync.h>
 
 CPU::~CPU() {
 	m_bus = nullptr;
-	m_timing = nullptr;
+	m_syncroniser = nullptr;
 }
 
 //INITIALISATION
@@ -19,15 +19,15 @@ bool CPU::set_bus_ptr(Bus* bus) {
 	return true;
 }
 
-bool CPU::set_timing_ptr(Timing* timing) {
-	m_timing = timing;
+bool CPU::set_timing_ptr(Syncroniser* syncroniser) {
+	m_syncroniser = syncroniser;
 
-	if (!m_timing) {
-		Logger::log(log_error, "CPU timing given nullptr");
+	if (!m_syncroniser) {
+		Logger::log(log_error, "CPU syncroniser given nullptr");
 		return false;
 	}
 
-	Logger::log(log_debug, "CPU set timing pointer");
+	Logger::log(log_debug, "CPU set syncroniser pointer");
 	return true;
 }
 
@@ -53,9 +53,9 @@ u16 CPU::read_pc_short() {
 }
 
 void CPU::tick_components(int ticks) {
-	m_timing->real_ticks(ticks);
+	m_syncroniser->real_ticks(ticks);
 }
 
 void CPU::idle_cycle() {
-	m_timing->real_cycle();
+	m_syncroniser->real_cycle();
 }
