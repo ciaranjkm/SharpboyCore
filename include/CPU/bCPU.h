@@ -2,6 +2,9 @@
 #include "Utilities/Common.h"
 #include "InstrDefs.h"
 
+#include <format>
+#include <fstream>
+
 struct s_registers {
 	u8 a = 0x00;
 	u8 f = 0x00;
@@ -19,6 +22,7 @@ struct s_registers {
 const s_registers POST_BOOT_ROM_REGS = {
 	.a = 0x01,
 	.f = 0xb0,
+	.b = 0x00,
 	.c = 0x13,
 	.d = 0x00,
 	.e = 0xd8,
@@ -56,10 +60,19 @@ struct s_cpu_context {
 
 class bCPU {
 public:
+	bCPU() {
+		log.open("logs.txt");
+	}
+	~bCPU() {
+		log.close();
+	}
+
 	//BASE FUNCTIONS FOR CPU OPERATION
 	int execute_next_instruction();
 	void reset(bool using_boot_rom);
 	s_registers* get_registers();
+
+	std::ofstream log;
 
 protected:
 	//BASE CPU MEMBER VARIABLES

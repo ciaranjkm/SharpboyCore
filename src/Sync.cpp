@@ -36,7 +36,7 @@ int Syncroniser::advance_cycles() {
         cycles += m_cpu->execute_next_instruction();
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(16));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     return 70224;
 }

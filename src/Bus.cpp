@@ -5,6 +5,7 @@ Bus::~Bus() {
 	m_cart = nullptr;
 	m_imu = nullptr;
 	m_ppu = nullptr;
+	m_timer = nullptr;
 }
 
 //UPDATE COMPONENT POINTERS
@@ -94,8 +95,8 @@ void Bus::write(u16 address, u8 value) {
 
 u8 Bus::read_io(u16 address) {
 	//joyp, serial, interrupt
-	if (address >= io_joyp && address <= io_sc || address == io_if) {
-		return m_imu->read(address);
+	if (address >= io_joyp && address <= io_sc || address == io_if || address == io_ie) {
+		return m_imu->read_io(address);
 	}
 	else if (address >= io_div && address <= io_tac) {
 		return m_timer->read_io(address);
@@ -120,8 +121,8 @@ u8 Bus::read_io(u16 address) {
 
 void Bus::write_io(u16 address, u8 value) {
 	//joyp, serial, interrupt
-	if (address >= io_joyp && address <= io_sc || address == io_if) {
-		m_imu->write(address, value);
+	if (address >= io_joyp && address <= io_sc || address == io_if || address == io_ie) {
+		m_imu->write_io(address, value);
 		return;
 	}
 	else if (address >= io_div && address <= io_tac) {

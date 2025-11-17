@@ -8,7 +8,7 @@
 
 /*
 	Internal Memory Unit,
-		holds hram, wram, echo and io that needs somewhere
+		holds hram, wram, echo and io that needs somewhere to live ;(
 */
 
 const int WRAM_SIZE = 0x2000;
@@ -24,11 +24,17 @@ class IMU {
 public:
 	IMU();
 
+	//RESET 
 	void reset();
 
+	//MEMORY ACCESS
 	u8 read(u16 address);
 	void write(u16 address, u8 value);
 
+	u8 read_io(u16 address);
+	void write_io(u16 address, u8 value);
+
+	//UPDATE JOYPAD STATE NOT USED IN CLI
 	void update_joypad(s_joypad_state new_joypad_state);
 
 private:
@@ -37,8 +43,4 @@ private:
 
 	s_imu_io m_io = {};
 	s_joypad_state m_joypad_state = {};
-
-private:
-	u8 read_io(u16 address);
-	void write_io(u16 address, u8 value);
 };

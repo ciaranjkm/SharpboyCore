@@ -1,16 +1,23 @@
 #include <CPU/bCPU.h>
-#include <format>
 
 //BASE CPU FUNCTIONS FOR OPERATION
 
 int bCPU::execute_next_instruction() {
+	u8 pc = read(m_registers.pc);
+	u8 pc1 = read(m_registers.pc + 1);
+	u8 pc2 = read(m_registers.pc + 2);
+	u8 pc3 = read(m_registers.pc + 3);
+	/*
+	log << std::format(
+		"A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} "
+		"SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}\n",
+		m_registers.a, m_registers.f, m_registers.b, m_registers.c,
+		m_registers.d, m_registers.e, m_registers.h, m_registers.l,
+		m_registers.sp, m_registers.pc, pc, pc1, pc2, pc3
+	);
+	*/
 	int cycles = 0;
 	u8 opcode = read_pc();
-
-	/*
-	printf("OP: 0x%02X A: 0x%02X F: 0x%02X B: 0x%02X C: 0x%02X D: 0x%02X E: 0x%02X H: 0x%02X L: 0x%02X PC: 0x%04X SP: 0x%04X\n",
-		opcode, m_registers.a, m_registers.f, m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l, m_registers.pc, m_registers.sp);
-	*/
 
 	cycles = execute_opcode(opcode);
 	return cycles;
@@ -18,7 +25,7 @@ int bCPU::execute_next_instruction() {
 
 //todo make reset based on boot rom or not
 void bCPU::reset(bool using_boot_rom) {
-	if (!using_boot_rom) {
+	if (using_boot_rom) {
 		m_registers = {};
 		return;
 	}
@@ -108,7 +115,11 @@ int bCPU::execute_opcode(u8 opcode) {
 
 		// 0x40 -> 0x4f
 	case inst_LD_B_B:        cycles = ld_r_r(m_registers.b, m_registers.b); break;
-	case inst_LD_B_C:        cycles = ld_r_r(m_registers.b, m_registers.c); break;
+	case inst_LD_B_C:        
+		printf("b: %02x\n", m_registers.b);
+		cycles = ld_r_r(m_registers.b, m_registers.c); 
+		printf("b: %02x\n", m_registers.b);
+		break;
 	case inst_LD_B_D:        cycles = ld_r_r(m_registers.b, m_registers.d); break;
 	case inst_LD_B_E:        cycles = ld_r_r(m_registers.b, m_registers.e); break;
 	case inst_LD_B_H:        cycles = ld_r_r(m_registers.b, m_registers.h); break;
@@ -320,23 +331,318 @@ int bCPU::execute_opcode(u8 opcode) {
 }
 
 int bCPU::execute_cb_opcode(int cycles) {
-	int cycles_cb = cycles;
-
-	//TODO THIS
-	//LMAO NO WONDER IT DIDNT WORK
-
+	int cycles_cb =  cycles;
 	u8 cb_opcode = read_pc();
 
 	switch (cb_opcode) {
-	case 0x00:
-		cycles += 4;
-		break;
+
+		//0x00->0x1f
+	case inst_CB_RLC_B: cycles_cb += rlc_r(m_registers.b); break;
+	case inst_CB_RLC_C: cycles_cb += rlc_r(m_registers.c); break;
+	case inst_CB_RLC_D: cycles_cb += rlc_r(m_registers.d); break;
+	case inst_CB_RLC_E: cycles_cb += rlc_r(m_registers.e); break;
+	case inst_CB_RLC_H: cycles_cb += rlc_r(m_registers.h); break;
+	case inst_CB_RLC_L: cycles_cb += rlc_r(m_registers.l); break;
+	case inst_CB_RLC_HL: cycles_cb += rlc_hl(); break;
+	case inst_CB_RLC_A: cycles_cb += rlc_r(m_registers.a); break;
+
+	case inst_CB_RRC_B: cycles_cb += rrc_r(m_registers.b); break;
+	case inst_CB_RRC_C: cycles_cb += rrc_r(m_registers.c); break;
+	case inst_CB_RRC_D: cycles_cb += rrc_r(m_registers.d); break;
+	case inst_CB_RRC_E: cycles_cb += rrc_r(m_registers.e); break;
+	case inst_CB_RRC_H: cycles_cb += rrc_r(m_registers.h); break;
+	case inst_CB_RRC_L: cycles_cb += rrc_r(m_registers.l); break;
+	case inst_CB_RRC_HL: cycles_cb += rrc_hl(); break;
+	case inst_CB_RRC_A: cycles_cb += rrc_r(m_registers.a); break;
+
+		//0x10->0x1f
+	case inst_CB_RL_B: cycles_cb += rl_r(m_registers.b); break;
+	case inst_CB_RL_C: cycles_cb += rl_r(m_registers.c); break;
+	case inst_CB_RL_D: cycles_cb += rl_r(m_registers.d); break;
+	case inst_CB_RL_E: cycles_cb += rl_r(m_registers.e); break;
+	case inst_CB_RL_H: cycles_cb += rl_r(m_registers.h); break;
+	case inst_CB_RL_L: cycles_cb += rl_r(m_registers.l); break;
+	case inst_CB_RL_HL: cycles_cb += rl_hl(); break;
+	case inst_CB_RL_A: cycles_cb += rl_r(m_registers.a); break;
+
+	case inst_CB_RR_B: cycles_cb += rr_r(m_registers.b); break;
+	case inst_CB_RR_C: cycles_cb += rr_r(m_registers.c); break;
+	case inst_CB_RR_D: cycles_cb += rr_r(m_registers.d); break;
+	case inst_CB_RR_E: cycles_cb += rr_r(m_registers.e); break;
+	case inst_CB_RR_H: cycles_cb += rr_r(m_registers.h); break;
+	case inst_CB_RR_L: cycles_cb += rr_r(m_registers.l); break;
+	case inst_CB_RR_HL: cycles_cb += rr_hl(); break;
+	case inst_CB_RR_A: cycles_cb += rr_r(m_registers.a); break;
+
+		//0x20->0x2f
+	case inst_CB_SLA_B: cycles_cb += sla_r(m_registers.b); break;
+	case inst_CB_SLA_C: cycles_cb += sla_r(m_registers.c); break;
+	case inst_CB_SLA_D: cycles_cb += sla_r(m_registers.d); break;
+	case inst_CB_SLA_E: cycles_cb += sla_r(m_registers.e); break;
+	case inst_CB_SLA_H: cycles_cb += sla_r(m_registers.h); break;
+	case inst_CB_SLA_L: cycles_cb += sla_r(m_registers.l); break;
+	case inst_CB_SLA_HL: cycles_cb += sla_hl(); break;
+	case inst_CB_SLA_A: cycles_cb += sla_r(m_registers.a); break;
+
+	case inst_CB_SRA_B: cycles_cb += sra_r(m_registers.b); break;
+	case inst_CB_SRA_C: cycles_cb += sra_r(m_registers.c); break;
+	case inst_CB_SRA_D: cycles_cb += sra_r(m_registers.d); break;
+	case inst_CB_SRA_E: cycles_cb += sra_r(m_registers.e); break;
+	case inst_CB_SRA_H: cycles_cb += sra_r(m_registers.h); break;
+	case inst_CB_SRA_L: cycles_cb += sra_r(m_registers.l); break;
+	case inst_CB_SRA_HL: cycles_cb += sra_hl(); break;
+	case inst_CB_SRA_A: cycles_cb += sra_r(m_registers.a); break;
+
+		//0x30->0x3f
+	case inst_CB_SWAP_B: cycles_cb += swap_r(m_registers.b); break;
+	case inst_CB_SWAP_C: cycles_cb += swap_r(m_registers.c); break;
+	case inst_CB_SWAP_D: cycles_cb += swap_r(m_registers.d); break;
+	case inst_CB_SWAP_E: cycles_cb += swap_r(m_registers.e); break;
+	case inst_CB_SWAP_H: cycles_cb += swap_r(m_registers.h); break;
+	case inst_CB_SWAP_L: cycles_cb += swap_r(m_registers.l); break;
+	case inst_CB_SWAP_HL: cycles_cb += swap_hl(); break;
+	case inst_CB_SWAP_A: cycles_cb += swap_r(m_registers.a); break;
+
+	case inst_CB_SRL_B: cycles_cb += srl_r(m_registers.b); break;
+	case inst_CB_SRL_C: cycles_cb += srl_r(m_registers.c); break;
+	case inst_CB_SRL_D: cycles_cb += srl_r(m_registers.d); break;
+	case inst_CB_SRL_E: cycles_cb += srl_r(m_registers.e); break;
+	case inst_CB_SRL_H: cycles_cb += srl_r(m_registers.h); break;
+	case inst_CB_SRL_L: cycles_cb += srl_r(m_registers.l); break;
+	case inst_CB_SRL_HL: cycles_cb += srl_hl(); break;
+	case inst_CB_SRL_A: cycles_cb += srl_r(m_registers.a); break;
+
+		//0x40->0x4f
+	case inst_CB_BIT0_B: cycles_cb += bit_b_r(0, m_registers.b); break;
+	case inst_CB_BIT0_C: cycles_cb += bit_b_r(0, m_registers.c); break;
+	case inst_CB_BIT0_D: cycles_cb += bit_b_r(0, m_registers.d); break;
+	case inst_CB_BIT0_E: cycles_cb += bit_b_r(0, m_registers.e); break;
+	case inst_CB_BIT0_H: cycles_cb += bit_b_r(0, m_registers.h); break;
+	case inst_CB_BIT0_L: cycles_cb += bit_b_r(0, m_registers.l); break;
+	case inst_CB_BIT0_HL: cycles_cb += bit_b_hl(0); break;
+	case inst_CB_BIT0_A: cycles_cb += bit_b_r(0, m_registers.a); break;
+
+	case inst_CB_BIT1_B: cycles_cb += bit_b_r(1, m_registers.b); break;
+	case inst_CB_BIT1_C: cycles_cb += bit_b_r(1, m_registers.c); break;
+	case inst_CB_BIT1_D: cycles_cb += bit_b_r(1, m_registers.d); break;
+	case inst_CB_BIT1_E: cycles_cb += bit_b_r(1, m_registers.e); break;
+	case inst_CB_BIT1_H: cycles_cb += bit_b_r(1, m_registers.h); break;
+	case inst_CB_BIT1_L: cycles_cb += bit_b_r(1, m_registers.l); break;
+	case inst_CB_BIT1_HL: cycles_cb += bit_b_hl(1); break;
+	case inst_CB_BIT1_A: cycles_cb += bit_b_r(1, m_registers.a); break;
+
+		//0x50->0x5f
+	case inst_CB_BIT2_B: cycles_cb += bit_b_r(2, m_registers.b); break;
+	case inst_CB_BIT2_C: cycles_cb += bit_b_r(2, m_registers.c); break;
+	case inst_CB_BIT2_D: cycles_cb += bit_b_r(2, m_registers.d); break;
+	case inst_CB_BIT2_E: cycles_cb += bit_b_r(2, m_registers.e); break;
+	case inst_CB_BIT2_H: cycles_cb += bit_b_r(2, m_registers.h); break;
+	case inst_CB_BIT2_L: cycles_cb += bit_b_r(2, m_registers.l); break;
+	case inst_CB_BIT2_HL: cycles_cb += bit_b_hl(2); break;
+	case inst_CB_BIT2_A: cycles_cb += bit_b_r(2, m_registers.a); break;
+
+	case inst_CB_BIT3_B: cycles_cb += bit_b_r(3, m_registers.b); break;
+	case inst_CB_BIT3_C: cycles_cb += bit_b_r(3, m_registers.c); break;
+	case inst_CB_BIT3_D: cycles_cb += bit_b_r(3, m_registers.d); break;
+	case inst_CB_BIT3_E: cycles_cb += bit_b_r(3, m_registers.e); break;
+	case inst_CB_BIT3_H: cycles_cb += bit_b_r(3, m_registers.h); break;
+	case inst_CB_BIT3_L: cycles_cb += bit_b_r(3, m_registers.l); break;
+	case inst_CB_BIT3_HL: cycles_cb += bit_b_hl(3); break;
+	case inst_CB_BIT3_A: cycles_cb += bit_b_r(3, m_registers.a); break;
+
+		//0x60->0x6f
+	case inst_CB_BIT4_B: cycles_cb += bit_b_r(4, m_registers.b); break;
+	case inst_CB_BIT4_C: cycles_cb += bit_b_r(4, m_registers.c); break;
+	case inst_CB_BIT4_D: cycles_cb += bit_b_r(4, m_registers.d); break;
+	case inst_CB_BIT4_E: cycles_cb += bit_b_r(4, m_registers.e); break;
+	case inst_CB_BIT4_H: cycles_cb += bit_b_r(4, m_registers.h); break;
+	case inst_CB_BIT4_L: cycles_cb += bit_b_r(4, m_registers.l); break;
+	case inst_CB_BIT4_HL: cycles_cb += bit_b_hl(4); break;
+	case inst_CB_BIT4_A: cycles_cb += bit_b_r(4, m_registers.a); break;
+
+	case inst_CB_BIT5_B: cycles_cb += bit_b_r(5, m_registers.b); break;
+	case inst_CB_BIT5_C: cycles_cb += bit_b_r(5, m_registers.c); break;
+	case inst_CB_BIT5_D: cycles_cb += bit_b_r(5, m_registers.d); break;
+	case inst_CB_BIT5_E: cycles_cb += bit_b_r(5, m_registers.e); break;
+	case inst_CB_BIT5_H: cycles_cb += bit_b_r(5, m_registers.h); break;
+	case inst_CB_BIT5_L: cycles_cb += bit_b_r(5, m_registers.l); break;
+	case inst_CB_BIT5_HL: cycles_cb += bit_b_hl(5); break;
+	case inst_CB_BIT5_A: cycles_cb += bit_b_r(5, m_registers.a); break;
+
+		//0x70->0x7f
+	case inst_CB_BIT6_B: cycles_cb += bit_b_r(6, m_registers.b); break;
+	case inst_CB_BIT6_C: cycles_cb += bit_b_r(6, m_registers.c); break;
+	case inst_CB_BIT6_D: cycles_cb += bit_b_r(6, m_registers.d); break;
+	case inst_CB_BIT6_E: cycles_cb += bit_b_r(6, m_registers.e); break;
+	case inst_CB_BIT6_H: cycles_cb += bit_b_r(6, m_registers.h); break;
+	case inst_CB_BIT6_L: cycles_cb += bit_b_r(6, m_registers.l); break;
+	case inst_CB_BIT6_HL: cycles_cb += bit_b_hl(6); break;
+	case inst_CB_BIT6_A: cycles_cb += bit_b_r(6, m_registers.a); break;
+
+	case inst_CB_BIT7_B: cycles_cb += bit_b_r(7, m_registers.b); break;
+	case inst_CB_BIT7_C: cycles_cb += bit_b_r(7, m_registers.c); break;
+	case inst_CB_BIT7_D: cycles_cb += bit_b_r(7, m_registers.d); break;
+	case inst_CB_BIT7_E: cycles_cb += bit_b_r(7, m_registers.e); break;
+	case inst_CB_BIT7_H: cycles_cb += bit_b_r(7, m_registers.h); break;
+	case inst_CB_BIT7_L: cycles_cb += bit_b_r(7, m_registers.l); break;
+	case inst_CB_BIT7_HL: cycles_cb += bit_b_hl(7); break;
+	case inst_CB_BIT7_A: cycles_cb += bit_b_r(7, m_registers.a); break;
+
+		//0x80->0x8f
+	case inst_CB_RES0_B: cycles_cb += res_b_r(0, m_registers.b); break;
+	case inst_CB_RES0_C: cycles_cb += res_b_r(0, m_registers.c); break;
+	case inst_CB_RES0_D: cycles_cb += res_b_r(0, m_registers.d); break;
+	case inst_CB_RES0_E: cycles_cb += res_b_r(0, m_registers.e); break;
+	case inst_CB_RES0_H: cycles_cb += res_b_r(0, m_registers.h); break;
+	case inst_CB_RES0_L: cycles_cb += res_b_r(0, m_registers.l); break;
+	case inst_CB_RES0_HL: cycles_cb += res_b_hl(0); break;
+	case inst_CB_RES0_A: cycles_cb += res_b_r(0, m_registers.a); break;
+
+	case inst_CB_RES1_B: cycles_cb += res_b_r(1, m_registers.b); break;
+	case inst_CB_RES1_C: cycles_cb += res_b_r(1, m_registers.c); break;
+	case inst_CB_RES1_D: cycles_cb += res_b_r(1, m_registers.d); break;
+	case inst_CB_RES1_E: cycles_cb += res_b_r(1, m_registers.e); break;
+	case inst_CB_RES1_H: cycles_cb += res_b_r(1, m_registers.h); break;
+	case inst_CB_RES1_L: cycles_cb += res_b_r(1, m_registers.l); break;
+	case inst_CB_RES1_HL: cycles_cb += res_b_hl(1); break;
+	case inst_CB_RES1_A: cycles_cb += res_b_r(1, m_registers.a); break;
+
+		//0x90->0x9f
+	case inst_CB_RES2_B: cycles_cb += res_b_r(2, m_registers.b); break;
+	case inst_CB_RES2_C: cycles_cb += res_b_r(2, m_registers.c); break;
+	case inst_CB_RES2_D: cycles_cb += res_b_r(2, m_registers.d); break;
+	case inst_CB_RES2_E: cycles_cb += res_b_r(2, m_registers.e); break;
+	case inst_CB_RES2_H: cycles_cb += res_b_r(2, m_registers.h); break;
+	case inst_CB_RES2_L: cycles_cb += res_b_r(2, m_registers.l); break;
+	case inst_CB_RES2_HL: cycles_cb += res_b_hl(2); break;
+	case inst_CB_RES2_A: cycles_cb += res_b_r(2, m_registers.a); break;
+
+	case inst_CB_RES3_B: cycles_cb += res_b_r(3, m_registers.b); break;
+	case inst_CB_RES3_C: cycles_cb += res_b_r(3, m_registers.c); break;
+	case inst_CB_RES3_D: cycles_cb += res_b_r(3, m_registers.d); break;
+	case inst_CB_RES3_E: cycles_cb += res_b_r(3, m_registers.e); break;
+	case inst_CB_RES3_H: cycles_cb += res_b_r(3, m_registers.h); break;
+	case inst_CB_RES3_L: cycles_cb += res_b_r(3, m_registers.l); break;
+	case inst_CB_RES3_HL: cycles_cb += res_b_hl(3); break;
+	case inst_CB_RES3_A: cycles_cb += res_b_r(3, m_registers.a); break;
+
+		//0xa0->0xaf
+	case inst_CB_RES4_B: cycles_cb += res_b_r(4, m_registers.b); break;
+	case inst_CB_RES4_C: cycles_cb += res_b_r(4, m_registers.c); break;
+	case inst_CB_RES4_D: cycles_cb += res_b_r(4, m_registers.d); break;
+	case inst_CB_RES4_E: cycles_cb += res_b_r(4, m_registers.e); break;
+	case inst_CB_RES4_H: cycles_cb += res_b_r(4, m_registers.h); break;
+	case inst_CB_RES4_L: cycles_cb += res_b_r(4, m_registers.l); break;
+	case inst_CB_RES4_HL: cycles_cb += res_b_hl(4); break;
+	case inst_CB_RES4_A: cycles_cb += res_b_r(4, m_registers.a); break;
+
+	case inst_CB_RES5_B: cycles_cb += res_b_r(5, m_registers.b); break;
+	case inst_CB_RES5_C: cycles_cb += res_b_r(5, m_registers.c); break;
+	case inst_CB_RES5_D: cycles_cb += res_b_r(5, m_registers.d); break;
+	case inst_CB_RES5_E: cycles_cb += res_b_r(5, m_registers.e); break;
+	case inst_CB_RES5_H: cycles_cb += res_b_r(5, m_registers.h); break;
+	case inst_CB_RES5_L: cycles_cb += res_b_r(5, m_registers.l); break;
+	case inst_CB_RES5_HL: cycles_cb += res_b_hl(5); break;
+	case inst_CB_RES5_A: cycles_cb += res_b_r(5, m_registers.a); break;
+		
+		//0xb0->bf
+	case inst_CB_RES6_B: cycles_cb += res_b_r(6, m_registers.b); break;
+	case inst_CB_RES6_C: cycles_cb += res_b_r(6, m_registers.c); break;
+	case inst_CB_RES6_D: cycles_cb += res_b_r(6, m_registers.d); break;
+	case inst_CB_RES6_E: cycles_cb += res_b_r(6, m_registers.e); break;
+	case inst_CB_RES6_H: cycles_cb += res_b_r(6, m_registers.h); break;
+	case inst_CB_RES6_L: cycles_cb += res_b_r(6, m_registers.l); break;
+	case inst_CB_RES6_HL: cycles_cb += res_b_hl(6); break;
+	case inst_CB_RES6_A: cycles_cb += res_b_r(6, m_registers.a); break;
+
+	case inst_CB_RES7_B: cycles_cb += res_b_r(7, m_registers.b); break;
+	case inst_CB_RES7_C: cycles_cb += res_b_r(7, m_registers.c); break;
+	case inst_CB_RES7_D: cycles_cb += res_b_r(7, m_registers.d); break;
+	case inst_CB_RES7_E: cycles_cb += res_b_r(7, m_registers.e); break;
+	case inst_CB_RES7_H: cycles_cb += res_b_r(7, m_registers.h); break;
+	case inst_CB_RES7_L: cycles_cb += res_b_r(7, m_registers.l); break;
+	case inst_CB_RES7_HL: cycles_cb += res_b_hl(7); break;
+	case inst_CB_RES7_A: cycles_cb += res_b_r(7, m_registers.a); break;
+
+		//0xc0->0xcf
+	case inst_CB_SET0_B: cycles_cb += set_b_r(0, m_registers.b); break;
+	case inst_CB_SET0_C: cycles_cb += set_b_r(0, m_registers.c); break;
+	case inst_CB_SET0_D: cycles_cb += set_b_r(0, m_registers.d); break;
+	case inst_CB_SET0_E: cycles_cb += set_b_r(0, m_registers.e); break;
+	case inst_CB_SET0_H: cycles_cb += set_b_r(0, m_registers.h); break;
+	case inst_CB_SET0_L: cycles_cb += set_b_r(0, m_registers.l); break;
+	case inst_CB_SET0_HL: cycles_cb += set_b_hl(0); break;
+	case inst_CB_SET0_A: cycles_cb += set_b_r(0, m_registers.a); break;
+
+	case inst_CB_SET1_B: cycles_cb += set_b_r(1, m_registers.b); break;
+	case inst_CB_SET1_C: cycles_cb += set_b_r(1, m_registers.c); break;
+	case inst_CB_SET1_D: cycles_cb += set_b_r(1, m_registers.d); break;
+	case inst_CB_SET1_E: cycles_cb += set_b_r(1, m_registers.e); break;
+	case inst_CB_SET1_H: cycles_cb += set_b_r(1, m_registers.h); break;
+	case inst_CB_SET1_L: cycles_cb += set_b_r(1, m_registers.l); break;
+	case inst_CB_SET1_HL: cycles_cb += set_b_hl(1); break;
+	case inst_CB_SET1_A: cycles_cb += set_b_r(1, m_registers.a); break;
+
+		//0xd0->0xdf
+	case inst_CB_SET2_B: cycles_cb += set_b_r(2, m_registers.b); break;
+	case inst_CB_SET2_C: cycles_cb += set_b_r(2, m_registers.c); break;
+	case inst_CB_SET2_D: cycles_cb += set_b_r(2, m_registers.d); break;
+	case inst_CB_SET2_E: cycles_cb += set_b_r(2, m_registers.e); break;
+	case inst_CB_SET2_H: cycles_cb += set_b_r(2, m_registers.h); break;
+	case inst_CB_SET2_L: cycles_cb += set_b_r(2, m_registers.l); break;
+	case inst_CB_SET2_HL: cycles_cb += set_b_hl(2); break;
+	case inst_CB_SET2_A: cycles_cb += set_b_r(2, m_registers.a); break;
+
+	case inst_CB_SET3_B: cycles_cb += set_b_r(3, m_registers.b); break;
+	case inst_CB_SET3_C: cycles_cb += set_b_r(3, m_registers.c); break;
+	case inst_CB_SET3_D: cycles_cb += set_b_r(3, m_registers.d); break;
+	case inst_CB_SET3_E: cycles_cb += set_b_r(3, m_registers.e); break;
+	case inst_CB_SET3_H: cycles_cb += set_b_r(3, m_registers.h); break;
+	case inst_CB_SET3_L: cycles_cb += set_b_r(3, m_registers.l); break;
+	case inst_CB_SET3_HL: cycles_cb += set_b_hl(3); break;
+	case inst_CB_SET3_A: cycles_cb += set_b_r(3, m_registers.a); break;
+
+		//0xe0->0xef
+	case inst_CB_SET4_B: cycles_cb += set_b_r(4, m_registers.b); break;
+	case inst_CB_SET4_C: cycles_cb += set_b_r(4, m_registers.c); break;
+	case inst_CB_SET4_D: cycles_cb += set_b_r(4, m_registers.d); break;
+	case inst_CB_SET4_E: cycles_cb += set_b_r(4, m_registers.e); break;
+	case inst_CB_SET4_H: cycles_cb += set_b_r(4, m_registers.h); break;
+	case inst_CB_SET4_L: cycles_cb += set_b_r(4, m_registers.l); break;
+	case inst_CB_SET4_HL: cycles_cb += set_b_hl(4); break;
+	case inst_CB_SET4_A: cycles_cb += set_b_r(4, m_registers.a); break;
+
+	case inst_CB_SET5_B: cycles_cb += set_b_r(5, m_registers.b); break;
+	case inst_CB_SET5_C: cycles_cb += set_b_r(5, m_registers.c); break;
+	case inst_CB_SET5_D: cycles_cb += set_b_r(5, m_registers.d); break;
+	case inst_CB_SET5_E: cycles_cb += set_b_r(5, m_registers.e); break;
+	case inst_CB_SET5_H: cycles_cb += set_b_r(5, m_registers.h); break;
+	case inst_CB_SET5_L: cycles_cb += set_b_r(5, m_registers.l); break;
+	case inst_CB_SET5_HL: cycles_cb += set_b_hl(5); break;
+	case inst_CB_SET5_A: cycles_cb += set_b_r(5, m_registers.a); break;
+
+		//0xf0->0xff
+	case inst_CB_SET6_B: cycles_cb += set_b_r(6, m_registers.b); break;
+	case inst_CB_SET6_C: cycles_cb += set_b_r(6, m_registers.c); break;
+	case inst_CB_SET6_D: cycles_cb += set_b_r(6, m_registers.d); break;
+	case inst_CB_SET6_E: cycles_cb += set_b_r(6, m_registers.e); break;
+	case inst_CB_SET6_H: cycles_cb += set_b_r(6, m_registers.h); break;
+	case inst_CB_SET6_L: cycles_cb += set_b_r(6, m_registers.l); break;
+	case inst_CB_SET6_HL: cycles_cb += set_b_hl(6); break;
+	case inst_CB_SET6_A: cycles_cb += set_b_r(6, m_registers.a); break;
+
+	case inst_CB_SET7_B: cycles_cb += set_b_r(7, m_registers.b); break;
+	case inst_CB_SET7_C: cycles_cb += set_b_r(7, m_registers.c); break;
+	case inst_CB_SET7_D: cycles_cb += set_b_r(7, m_registers.d); break;
+	case inst_CB_SET7_E: cycles_cb += set_b_r(7, m_registers.e); break;
+	case inst_CB_SET7_H: cycles_cb += set_b_r(7, m_registers.h); break;
+	case inst_CB_SET7_L: cycles_cb += set_b_r(7, m_registers.l); break;
+	case inst_CB_SET7_HL: cycles_cb += set_b_hl(7); break;
+	case inst_CB_SET7_A: cycles_cb += set_b_r(7, m_registers.a); break;
 
 	default:
 		return cycles_cb;
 	}
-
-	return cycles_cb;
 }
 
 bool bCPU::get_flag(e_flags flag) const {
