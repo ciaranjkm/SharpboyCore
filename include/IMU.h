@@ -3,7 +3,8 @@
 #include "Utilities/Common.h"
 #include "Utilities/IO.h"
 #include "Joypad.h"
-#include <array>
+
+#include <vector>
 
 /*
 	Internal Memory Unit,
@@ -21,6 +22,8 @@ struct s_imu_io {
 
 class IMU {
 public:
+	IMU();
+
 	void reset();
 
 	u8 read(u16 address);
@@ -29,8 +32,8 @@ public:
 	void update_joypad(s_joypad_state new_joypad_state);
 
 private:
-	std::array<u8, WRAM_SIZE> m_wram = std::array<u8, WRAM_SIZE>();
-	std::array<u8, HRAM_SIZE> m_hram = std::array<u8, HRAM_SIZE>();
+	std::vector<u8> m_wram = std::vector<u8>();
+	std::vector<u8> m_hram = std::vector<u8>();
 
 	s_imu_io m_io = {};
 	s_joypad_state m_joypad_state = {};

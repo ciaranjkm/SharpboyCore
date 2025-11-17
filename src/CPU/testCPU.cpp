@@ -4,6 +4,7 @@
 void testCPU::reset_for_next_test() {
 	m_registers = {};
 	m_memory.fill(0x00);
+	m_test_cycles.clear();
 }
 
 void testCPU::update_registers_state(s_registers reg) {
@@ -21,10 +22,6 @@ void testCPU::get_test_result(s_test_result& test_result, s_registers expected_r
 	check_registers(test_result, expected_regs);
 	check_memory(test_result, expected_memory);
 	check_cycles(test_result, expected_cycles);
-
-	if (test_result.result) {
-		test_result.msg = "TEST PASSED";
-	}
 }
 
 //MEMBER FUNCTIONS
@@ -42,27 +39,27 @@ void testCPU::check_registers(s_test_result& test_result, s_registers expected_r
 	std::string fail_msg = "";
 	for (int i = 0; i < 8; i++) {
 		if (final[i] != expected[i]) {
-			fail_msg = std::format("{} | GOT: {} EXP: {}", register_names[i], final[i], expected[i]);
+			fail_msg = std::format("{} | GOT: {:#02x} EXP: {:#02x}", register_names[i], final[i], expected[i]);
 
 			test_result.result = false;
-			test_result.msg.append(std::format("{}{}\n", fail_prefix, fail_msg));
+			test_result.msg.append(std::format(" {}{}", fail_prefix, fail_msg));
 			return;
 		}
 	}
 
 	if (m_registers.pc != expected_regs.pc) {
-		fail_msg = std::format("PC | GOT: {} EXP: {}", m_registers.pc, expected_regs.pc);
+		fail_msg = std::format("PC | GOT: {:#04x} EXP: {:#04x}", m_registers.pc, expected_regs.pc);
 
 		test_result.result = false;
-		test_result.msg.append(std::format("{}{}\n", fail_prefix, fail_msg));
+		test_result.msg.append(std::format(" {}{}", fail_prefix, fail_msg));
 
 		return;
 	}
 	if (m_registers.sp != expected_regs.sp) {
-		fail_msg = std::format("SP | GOT: {} EXP: {}", m_registers.sp, expected_regs.sp);
+		fail_msg = std::format("SP | GOT: {:#04x} EXP: {:#04x}", m_registers.sp, expected_regs.sp);
 
 		test_result.result = false;
-		test_result.msg.append(std::format(" {}{}\n", fail_prefix, fail_msg));
+		test_result.msg.append(std::format(" {}{}", fail_prefix, fail_msg));
 
 		return;
 	}
@@ -80,8 +77,8 @@ void testCPU::check_memory(s_test_result& test_result, const std::vector<s_test_
 		u8 got_value = m_memory[mem_pair.address];
 
 		if (got_value != mem_pair.value) {
-			std::string fail_msg = std::format("{} | GOT: {} EXP: {}", mem_pair.address, got_value, mem_pair.value);
-			test_result.msg.append(std::format("{}{}\n", fail_prefix, fail_msg));
+			std::string fail_msg = std::format("{:02x} | GOT: {:#02x} EXP: {:#02x}", mem_pair.address, got_value, mem_pair.value);
+			test_result.msg.append(std::format(" {}{}", fail_prefix, fail_msg));
 			test_result.result = false;
 
 			return;
@@ -111,7 +108,7 @@ void testCPU::check_cycles(s_test_result& test_result, const std::vector<s_test_
 		s_test_cycle actual_cycle = m_test_cycles[c];
 
 		if (actual_cycle.address != expected_cycle.address) {
-			std::string fail_msg = std::format(" {} IN ADDRESS | GOT: {} EXP: {}", fail_prefix, actual_cycle.address, expected_cycle.address);
+			std::string fail_msg = std::format(" {} IN ADDRESS | GOT: {:#04x} EXP: {:#04x}", fail_prefix, actual_cycle.address, expected_cycle.address);
 
 			test_result.result = false;
 			test_result.msg.append(fail_msg);
@@ -119,7 +116,7 @@ void testCPU::check_cycles(s_test_result& test_result, const std::vector<s_test_
 			return;
 		}
 		if (actual_cycle.value != expected_cycle.value) {
-			std::string fail_msg = std::format(" {} IN VALUE | GOT: {} EXP: {}", fail_prefix, actual_cycle.value, expected_cycle.value);
+			std::string fail_msg = std::format(" {} IN VALUE | GOT: {:#02x} EXP: {:#02x}", fail_prefix, actual_cycle.value, expected_cycle.value);
 
 			test_result.result = false;
 			test_result.msg.append(fail_msg);
@@ -142,22 +139,30 @@ std::array<u8, 8> testCPU::convert_registers(s_registers regs) {
 	return new_regs;
 }
 
+void testCPU::add_cycle(u16 address, u8 value, std::string op) {
+	m_test_cycles.emplace_back(address, value, op);
+}
+
 //VIRTUAL FUNCTIONS
 u8 testCPU::read(u16 address) {
-	return m_memory[address];
+	u8 value = m_memory[address];
+	add_cycle(address, value, "r-m");
+	return value;
 }
 
 void testCPU::write(u16 address, u8 value) {
 	m_memory[address] = value;
+	add_cycle(address, value, "-wm");
 }
 
 u8 testCPU::read_pc(bool read_interrupt) {
-	return m_memory[m_registers.pc++];
+	u8 value = read(m_registers.pc++);
+	return value;
 }
 
 u16 testCPU::read_pc_short() {
-	u8 low = m_memory[m_registers.pc++];
-	u8 high = m_memory[m_registers.pc++];
+	u8 low = read(m_registers.pc++); 
+	u8 high = read(m_registers.pc++);
 
 	return (high << 8) | low;
 }
@@ -167,5 +172,11 @@ void testCPU::tick_components(int cycles) {
 }
 
 void testCPU::idle_cycle() {
-	//todo add a cycle to counter for testing
+	if (!(m_test_cycles.size() > 0)) {
+		return;
+	}
+
+	u16 address = m_test_cycles.back().address;
+	u8 value = m_test_cycles.back().value;
+	add_cycle(address, value, "---");
 }

@@ -40,17 +40,19 @@ void SST::run() {
 
 	//LOOP SMALL TEST COUNT 0-16
 	for (int i = 0; i < SMALL_TEST_COUNT; i++) {
+		std::string test_name = prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i];
+
 		//CREATE RESULT FOR TEST
 		s_test_result& result = m_results[i];
 		result.test_num = start_test + i;
 		result.prefixed = prefixed;
-		result.msg = std::format("TEST PASSED: {}", prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i]);
+		result.msg = std::format("{} | ", test_name);
 		completed_tests_count++;
 
 		//CHECK FOR TEST FILE AND READ IT
 		std::string test_file_name = std::format("{}", prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i]);
 		if (test_file_name == invalid_json_file_name) {
-			result.msg = std::format("INVALID OPCODE {}", start_test + i);
+			result.msg.append(std::format("INVALID OPCODE {}", start_test + i));
 			result.result = false;
 			continue;
 		}
@@ -59,7 +61,7 @@ void SST::run() {
 
 		if (!std::filesystem::exists(file_name)) {
 			result.result = false;
-			result.msg = std::format("COULDN'T FIND TEST FILE {}", file_name);
+			result.msg.append(std::format("COULDN'T FIND TEST FILE {}", file_name));
 			continue;
 		}
 
@@ -71,7 +73,6 @@ void SST::run() {
 		for (const auto& test_case : test_json) {
 			tCPU->reset_for_next_test();
 
-			result.msg = test_case["name"].get<std::string>();
 			const auto& test_initial = test_case["initial"];
 			const auto& test_final = test_case["final"];
 			const auto& test_cycles = test_case["cycles"];
@@ -126,6 +127,14 @@ void SST::run() {
 			//EXECUTE TEST
 			tCPU->execute_next_instruction();
 			tCPU->get_test_result(result, final_regs, final_mem, final_cycles);
+
+			if (!result.result) {
+				break;
+			}
+		}
+
+		if (result.result) {
+			result.msg.append("TEST PASSED");
 		}
 
 		m_results[i] = result;

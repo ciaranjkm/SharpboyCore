@@ -4,6 +4,7 @@
 #include "Utilities/IO.h"
 
 #include <array>
+#include <vector>
 
 enum e_ppu_mode {
 	ppu_idle,
@@ -35,7 +36,10 @@ const int SCANLINE_LENGTH = 456;
 
 class PPU {
 public:
+	PPU();
+
 	void tick();
+	void reset();
 
 	u8 read(u16 address);
 	void write(u16 address, u8 value);
@@ -46,6 +50,6 @@ public:
 private:
 	s_ppu_io m_ppu_io = {};
 
-	std::array<u8, VRAM_SIZE> m_vram = std::array<u8, VRAM_SIZE>();
+	std::vector<u8> m_vram = std::vector<u8>();
 	std::array<u8, OAM_SIZE> m_oam = std::array<u8, OAM_SIZE>();
 };

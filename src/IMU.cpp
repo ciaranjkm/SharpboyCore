@@ -1,8 +1,13 @@
 #include <IMU.h>
 
+IMU::IMU() {
+	m_wram.resize(WRAM_SIZE);
+	m_hram.resize(HRAM_SIZE);
+}
+
 void IMU::reset() {
-	m_wram.fill(0x00);
-	m_hram.fill(0x00);
+	m_wram.clear();
+	m_hram.clear();
 
 	m_io = {};
 }
@@ -18,7 +23,7 @@ u8 IMU::read(u16 address) {
 		return read_io(address);
 	}
 	else if (address >= 0xff80 && address < 0xffff) {
-		return m_hram[(u16)(address - 0xff80)];
+		return m_wram[(u16)(address - 0xff80)];
 	}
 	else {
 		return 0xff;

@@ -1,5 +1,13 @@
 #include <PPU.h>
 
+PPU::PPU() {
+	m_vram.resize(VRAM_SIZE);
+}
+
+void PPU::reset() {
+	m_vram.clear();
+}
+
 void PPU::tick() {
 	//not impl yet
 }

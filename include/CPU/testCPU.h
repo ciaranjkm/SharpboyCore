@@ -46,6 +46,7 @@ private:
 	void check_cycles(s_test_result& test_result, const std::vector<s_test_cycle>& expected_cycles);
 
 	std::array<u8, 8> convert_registers(s_registers regs);
+	void add_cycle(u16 address, u8 value, std::string op);
 
 	//VIRTUAL FUNCTIONS
 	u8 read(u16 address) override;
