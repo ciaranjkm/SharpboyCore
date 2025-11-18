@@ -4,15 +4,13 @@
 //TICK
 void Timer::tick(CPU* m_cpu) {
 	m_timer_io.div++;
-	/*
-
 	//select timer bit from tac
 	int bit_selected = 9;
 	switch (m_timer_io.tac & 0x03) {
-	case 0b00: bit_selected = 9; // 4096 Hz
-	case 0b01: bit_selected = 3; // 262144 Hz
-	case 0b10: bit_selected = 5; // 65536 Hz
-	case 0b11: bit_selected = 7; // 16384 Hz
+	case 0b00: bit_selected = 9; break; // 4096 Hz
+	case 0b01: bit_selected = 3; break;// 262144 Hz
+	case 0b10: bit_selected = 5; break;// 65536 Hz
+	case 0b11: bit_selected = 7; break;// 16384 Hz
 	}
 	bool div_bit_selected = (m_timer_io.div & (1 << bit_selected)) != 0x00;
 	bool timer_enabled = (m_timer_io.tac & 0x4) != 0x00;
@@ -42,10 +40,7 @@ void Timer::tick(CPU* m_cpu) {
 		//complete reload of tima and trigger interrupt, load with new tma incase of a new write on t cycle 2 of m cycle 2
 		if (tima_delay == 2) {
 			m_timer_io.tima = m_timer_io.tma;
-			
-			u8 IF = m_cpu->read(io_if);
-			IF |= (1 << 2);
-			m_cpu->write(io_if, IF);
+			Interrupts::send_interrupt(interrupt_timer);
 		}
 
 		//when tima delay is complete turn off tima reload
@@ -56,7 +51,6 @@ void Timer::tick(CPU* m_cpu) {
 	}
 
 	previous_and_result = and_result;
-	*/
 }
 
 //RESET

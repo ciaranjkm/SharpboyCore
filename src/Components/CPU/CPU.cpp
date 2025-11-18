@@ -35,9 +35,21 @@ bool CPU::set_sync_ptr(Syncroniser* syncroniser) {
 int CPU::step() {
 	int cycles = 0;
 
-	u8 op = read_pc();
-	cycles += execute_opcode(op);
+	if (m_cpu.halted) {
+		if (Interrupts::check_for_interrupt()) {
+			m_cpu.halted = false;
+			return 0;
+		}
+		else {
+			tick_components(1);
+			return cycles += 1;
+		}
+	}
 
+	u8 op = read_pc();
+	check_halt_bug();
+
+	cycles += execute_opcode(op);
 	cycles += handle_interrupt();
 
 	check_enable_ime();
@@ -83,15 +95,8 @@ void CPU::nontick_write(u16 address, u8 value) {
 	m_bus->write(address, value);
 }
 
-void CPU::check_for_interrupt() {
-	u8 int_flag = Interrupts::read_if();
-	u8 int_enable = Interrupts::read_ie();
-
-	m_cpu.interrupt_pending = (int_flag & int_enable) & 0x1f;
-}
-
 int CPU::handle_interrupt() {
-	if (!m_cpu.ime || !Interrupts::check_for_interrupt()) {
+	if (!m_cpu.ime) {
 		return 0;
 	}
 
@@ -112,9 +117,15 @@ int CPU::handle_interrupt() {
 
 	idle_cycle(); 
 
-	Interrupts::clear_interrupt(pending);
-	m_registers.pc = Interrupts::get_interrupt_vector(pending);
+	u16 vector = Interrupts::get_interrupt_vector(pending);
+	if (vector != 0x00) {
+		m_registers.pc = vector;
+		Interrupts::clear_interrupt(pending);
 
+		return ticks_20;
+	}
+
+	m_registers.pc = 0x0000;
 	return ticks_20; 
 }
 
@@ -125,22 +136,9 @@ void CPU::check_enable_ime() {
 	}
 }
 
-e_interrupts CPU::get_interrupt_pending() {
-	for (int i = 0; i < 5; i++) {
-		u8 interrupt_pending = (m_cpu.interrupt_pending & (0x01 << i));
-		if (interrupt_pending != 0) {
-			return (e_interrupts)i;
-		}
+void CPU::check_halt_bug() {
+	if (m_cpu.halt_bug) {
+		m_registers.pc--;
+		m_cpu.halt_bug = false;
 	}
-
-	return interrupt_none;
-}
-
-void CPU::clear_if_bit(e_interrupts bit_to_clear) {
-	u8 mask = ~(0x01 << bit_to_clear);
-
-	u8 interrupt_flag = nontick_read(io_if);
-	interrupt_flag &= mask;
-
-	nontick_write(io_if, interrupt_flag);
 }

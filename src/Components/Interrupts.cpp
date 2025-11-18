@@ -38,7 +38,7 @@ e_interrupts Interrupts::get_pending_interrupt() {
 			break;
 		}
 
-		i = -1;
+		bit = -1;
 	}
 
 	return (e_interrupts)bit;

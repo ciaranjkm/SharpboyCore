@@ -25,6 +25,7 @@ void Syncroniser::real_ticks(int ticks) {
 	for (int i = 0; i < ticks; i++) {
 		//advance other components
 		m_ppu->tick();
+		m_timer->tick(m_cpu);
 	}
 }
 

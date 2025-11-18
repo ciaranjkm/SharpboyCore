@@ -1,4 +1,5 @@
 #include <Components/CPU/bCPU.h>
+#include <Components/Interrupts.h>
 
 //8 bit load instructions
 
@@ -1388,11 +1389,10 @@ int bCPU::rst_n(u8 vector) {
 
 //misc instructions
 int bCPU::halt() {
-	if (m_cpu.interrupt_pending != 0 && !m_cpu.ime) {
-		m_cpu.halt_bug = true;
+	if (!m_cpu.ime && Interrupts::check_for_interrupt()) {
 		m_cpu.halted = false;
-
-		return ticks_0;
+		m_cpu.halt_bug = true;
+		return 0;
 	}
 
 	m_cpu.halted = true;
@@ -1410,14 +1410,12 @@ int bCPU::stop() {
 int bCPU::ei() {
 	m_cpu.enable_ime = true;
 	m_cpu.ime = false;
-	m_cpu.ime_count = 1;
 
 	return ticks_0;
 }
 
 int bCPU::di() {
 	m_cpu.ime = false;
-	m_cpu.enable_ime = false;
 
 	return ticks_0;
 }

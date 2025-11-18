@@ -20,9 +20,6 @@ public:
 	bool set_bus_ptr(Bus* bus);
 	bool set_sync_ptr(Syncroniser* syncroniser);
 
-	int handle_interrupt();
-	void check_enable_ime();
-	void check_for_interrupt();
 
 private:
 	Bus* m_bus = nullptr;
@@ -43,6 +40,7 @@ private:
 	u8 nontick_read(u16 address);
 	void nontick_write(u16 address, u8 value);
 
-	e_interrupts get_interrupt_pending();
-	void clear_if_bit(e_interrupts bit_to_clear);
+	int handle_interrupt();
+	void check_halt_bug();
+	void check_enable_ime();
 };
