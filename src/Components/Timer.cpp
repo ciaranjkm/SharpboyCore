@@ -4,53 +4,37 @@
 //TICK
 void Timer::tick(CPU* m_cpu) {
 	m_timer_io.div++;
-	//select timer bit from tac
-	int bit_selected = 9;
-	switch (m_timer_io.tac & 0x03) {
-	case 0b00: bit_selected = 9; break; // 4096 Hz
-	case 0b01: bit_selected = 3; break;// 262144 Hz
-	case 0b10: bit_selected = 5; break;// 65536 Hz
-	case 0b11: bit_selected = 7; break;// 16384 Hz
-	}
-	bool div_bit_selected = (m_timer_io.div & (1 << bit_selected)) != 0x00;
-	bool timer_enabled = (m_timer_io.tac & 0x4) != 0x00;
 
-	//find falling edge result
+	int tac_bit = get_tac_bit();
+
+	bool timer_enabled = is_timer_enabled();
+	bool div_bit_selected = (m_timer_io.div & (1 << tac_bit)) != 0x00;
+
 	bool and_result = div_bit_selected && timer_enabled;
 
-	//inc timer if edge case
 	if (previous_and_result && !and_result) {
 		m_timer_io.tima++;
 		if (m_timer_io.tima == 0x00) {
 			reload_tima = true;
-			tima_delay = DEFAULT_TIMA_DELAY;
-		}
-
-		previous_and_result = and_result;
-	}
-
-	if (reload_tima) {
-		tima_delay--;
-
-		//after 1 m cycle load tma into tma
-		if (tima_delay == 4) {
-			m_timer_io.tima = m_timer_io.tma;
-		}
-
-		//complete reload of tima and trigger interrupt, load with new tma incase of a new write on t cycle 2 of m cycle 2
-		if (tima_delay == 2) {
-			m_timer_io.tima = m_timer_io.tma;
-			Interrupts::send_interrupt(interrupt_timer);
-		}
-
-		//when tima delay is complete turn off tima reload
-		if (tima_delay == 0) {
-			reload_tima = false;
-			tima_delay = -1;
 		}
 	}
 
 	previous_and_result = and_result;
+
+	if (reload_tima) {
+		tima_delay--;
+
+		//after 1 m cycle load tma into tima
+		if (tima_delay != 0) {
+			return;
+		}
+
+		m_timer_io.tima = m_timer_io.tma;
+		reload_tima = false;
+		tima_delay = DEFAULT_TIMA_DELAY;
+
+		Interrupts::send_interrupt(interrupt_timer);
+	}
 }
 
 //RESET
@@ -100,4 +84,27 @@ void Timer::write_io(u16 address, u8 value) {
 	default:
 		return;
 	}
+}
+
+int Timer::get_tac_bit() {
+	switch (m_timer_io.tac & 0x03) {
+	case 0x00: 
+		return 9; //default 4096
+
+	case 0x01: 
+		return 3; 
+
+	case 0x02: 
+		return 5; 
+
+	case 0x03: 
+		return 7;
+
+	default:
+		return 9;
+	}
+}
+
+bool Timer::is_timer_enabled() {
+	return (m_timer_io.tac & 0x4) != 0x00;
 }

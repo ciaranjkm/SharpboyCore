@@ -12,6 +12,8 @@ struct s_timer_io {
 	u8 tac = 0x00;
 };
 
+const int DEFAULT_TIMA_DELAY = 4;
+
 class Timer {
 public:
 	//TICK
@@ -29,8 +31,11 @@ private:
 	s_timer_io m_timer_io = {};
 
 	bool reload_tima = false;
-	int tima_delay = 0;
+	int tima_delay = DEFAULT_TIMA_DELAY;
 	bool previous_and_result = false;
 
-	const int DEFAULT_TIMA_DELAY = 8;
+private:
+	//MEMBER FUNCTIONS
+	int get_tac_bit();
+	bool is_timer_enabled();
 };

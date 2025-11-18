@@ -9,7 +9,7 @@
 
 class Syncroniser;
 
-class CPU : public bCPU{
+class CPU final : public bCPU {
 public:
 	~CPU();
 
@@ -19,7 +19,6 @@ public:
 	//initialisation
 	bool set_bus_ptr(Bus* bus);
 	bool set_sync_ptr(Syncroniser* syncroniser);
-
 
 private:
 	Bus* m_bus = nullptr;
@@ -37,9 +36,6 @@ private:
 	void idle_cycle() override;
 
 	//MEMBER FUNCTIONS
-	u8 nontick_read(u16 address);
-	void nontick_write(u16 address, u8 value);
-
 	int handle_interrupt();
 	void check_halt_bug();
 	void check_enable_ime();

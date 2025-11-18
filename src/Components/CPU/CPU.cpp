@@ -87,14 +87,6 @@ void CPU::idle_cycle() {
 	m_syncroniser->real_cycle();
 }
 
-u8 CPU::nontick_read(u16 address) {
-	return m_bus->read(address);
-}
-
-void CPU::nontick_write(u16 address, u8 value) {
-	m_bus->write(address, value);
-}
-
 int CPU::handle_interrupt() {
 	if (!m_cpu.ime) {
 		return 0;

@@ -31,7 +31,7 @@ void Syncroniser::real_ticks(int ticks) {
 
 void Syncroniser::real_cycle() {
 	for (int i = 0; i < 4; i++) {
-		//advance other components
+		//advance other components 1 m cycle
 		m_ppu->tick();
 		m_timer->tick(m_cpu);
 	}

@@ -66,6 +66,10 @@ void ComponentManager::load_rom_into_cart(const std::vector<u8>& rom, bool using
 	}
 
 	m_cartridge->load_rom(rom);
+
+	if (using_boot_rom) {
+		m_cartridge->swap_boot_rom_buffer();
+	}
 }
 
 //RESET ALL COMPONENTS TO ZERO
