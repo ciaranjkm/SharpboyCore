@@ -1,11 +1,11 @@
 #pragma once
 #include "Utilities/Logger.h"
-#include "../../Utilities/IO.h"
+#include "../../Common.h"
 #include <array>
 
 #include "bCPU.h"
 #include "../Bus.h"
-#include "../../Interrupts.h"
+#include "../Interrupts.h"
 
 class Syncroniser;
 

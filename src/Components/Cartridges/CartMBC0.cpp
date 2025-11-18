@@ -1,4 +1,4 @@
-#include <Cartridges/CartMBC0.h>
+#include <Components/Cartridges/CartMBC0.h>
 
 CartMBC0::CartMBC0(e_cart_types type, bool ram_enabled, bool battery_enabled) {
 	m_cartridge.ram_enabled = ram_enabled;

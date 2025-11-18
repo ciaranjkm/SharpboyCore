@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Utilities/Common.h"
+#include "../Common.h"
 
 struct s_joypad_state {
 	bool up = false;

@@ -1,8 +1,9 @@
 #pragma once
 
-#include "../Utilities/Common.h"
-#include "../Utilities/IO.h"
-#include  "../Interrupts.h"
+#include "../Common.h"
+#include  "Components/Interrupts.h"
+#include "IO.h"
+
 #include "Cartridges/Cartridge.h"
 #include "IMU.h"
 #include "PPU.h"

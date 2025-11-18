@@ -1,4 +1,4 @@
-#include <Interrupts.h>
+#include <Components/Interrupts.h>
 
 void Interrupts::send_interrupt(e_interrupts type) {
 	IF |= (0x01 << type);

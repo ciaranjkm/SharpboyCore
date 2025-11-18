@@ -1,4 +1,4 @@
-#include <Cartridges/Cartridge.h>
+#include <Components/Cartridges/Cartridge.h>
 
 bool Cartridge::load_rom(const std::vector<u8>& rom) {
 	return false;

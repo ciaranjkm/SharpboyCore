@@ -5,7 +5,7 @@
 #include "Components/IMU.h"
 #include "Components/PPU.h"
 #include "Components/Timer.h"
-#include "Cartridges/CartDefs.h"
+#include "Components/Cartridges/CartDefs.h"
 
 #include <memory>
 

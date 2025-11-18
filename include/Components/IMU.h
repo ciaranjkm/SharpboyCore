@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Utilities/Common.h"
-#include "../Utilities/IO.h"
+#include "../Common.h"
+#include "IO.h"
 #include "Joypad.h"
 
 #include <vector>

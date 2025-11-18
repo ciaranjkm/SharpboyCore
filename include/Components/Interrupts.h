@@ -1,7 +1,7 @@
 #pragma once
 
 #include "InterruptDefs.h"
-#include "Utilities/Common.h"
+#include "../Common.h"
 
 class Interrupts {
 public:

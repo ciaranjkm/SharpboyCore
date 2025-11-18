@@ -302,7 +302,7 @@ int bCPU::execute_opcode(u8 opcode) {
 	case inst_RST_38:        cycles = rst_n(0x38); break;
 
 	default:
-		printf("unimplemented opcode: %02x\n", opcode);
+		cycles = 0;
 		break;
 	}
 
@@ -620,8 +620,10 @@ int bCPU::execute_cb_opcode(int cycles) {
 	case inst_CB_SET7_A: cycles_cb += set_b_r(7, m_registers.a); break;
 
 	default:
-		return cycles_cb;
+		cycles_cb = 0;
 	}
+
+	return cycles_cb;
 }
 
 bool bCPU::get_flag(e_flags flag) const {
