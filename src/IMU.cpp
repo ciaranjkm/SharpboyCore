@@ -1,4 +1,4 @@
-#include <IMU.h>
+#include <Components/IMU.h>
 
 IMU::IMU() {
 	m_wram.resize(WRAM_SIZE);
@@ -6,9 +6,13 @@ IMU::IMU() {
 }
 
 //RESET
-void IMU::reset() {
+void IMU::reset(bool using_boot_rom) {
+	//todo init to using boot rom values
 	m_wram.clear();
+	m_wram.resize(WRAM_SIZE);
+
 	m_hram.clear();
+	m_hram.resize(HRAM_SIZE);
 
 	m_io = {};
 }
@@ -46,9 +50,6 @@ void IMU::write(u16 address, u8 value) {
 
 u8 IMU::read_io(u16 address) {
 	switch (address) {
-	case io_ie:
-		return m_io.IE & 0x1f;
-
 	case io_joyp:
 		return convert_to_joypad_value(m_joypad_state);
 
@@ -65,8 +66,8 @@ u8 IMU::read_io(u16 address) {
 
 void IMU::write_io(u16 address, u8 value) {
 	switch (address) {
-	case io_ie:
-		m_io.IE = value & 0x1f;
+	case io_joyp:
+		m_io.joyp = (value | 0x30);
 		return;
 
 	case io_sb:

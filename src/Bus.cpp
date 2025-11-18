@@ -1,4 +1,4 @@
-#include <Bus.h>
+#include <Components/Bus.h>
 
 //DESTRUCTOR AND CONSTRUCTOR
 Bus::~Bus() {
@@ -9,20 +9,44 @@ Bus::~Bus() {
 }
 
 //UPDATE COMPONENT POINTERS
-void Bus::update_cartridge_ptr(Cartridge* cart) {
+bool Bus::update_cartridge_ptr(Cartridge* cart) {
 	m_cart = cart;
+
+	if (m_cart) {
+		return true;
+	}
+
+	return false;
 }
 
-void Bus::update_imu_ptr(IMU* imu) {
+bool Bus::update_imu_ptr(IMU* imu) {
 	m_imu = imu;
+
+	if (m_imu) {
+		return true;
+	}
+
+	return false;
 }
 
-void Bus::update_ppu_ptr(PPU* ppu) {
+bool Bus::update_ppu_ptr(PPU* ppu) {
 	m_ppu = ppu;
+
+	if (m_ppu) {
+		return true;
+	}
+	
+	return false;
 }
 
-void Bus::update_timer_ptr(Timer* timer) {
+bool Bus::update_timer_ptr(Timer* timer) {
 	m_timer = timer;
+
+	if (m_timer) {
+		return true;
+	}
+
+	return false;
 }
 
 //MEMORY ACCESS AND REDIRECTION
@@ -94,8 +118,13 @@ void Bus::write(u16 address, u8 value) {
 }
 
 u8 Bus::read_io(u16 address) {
-	//joyp, serial, interrupt
-	if (address >= io_joyp && address <= io_sc || address == io_if || address == io_ie) {
+	if (address == io_if) {
+		return Interrupts::read_if();
+	}
+	else if (address == io_ie) {
+		return Interrupts::read_ie();
+	}
+	else if (address >= io_joyp && address <= io_sc) {
 		return m_imu->read_io(address);
 	}
 	else if (address >= io_div && address <= io_tac) {
@@ -120,8 +149,13 @@ u8 Bus::read_io(u16 address) {
 }
 
 void Bus::write_io(u16 address, u8 value) {
-	//joyp, serial, interrupt
-	if (address >= io_joyp && address <= io_sc || address == io_if || address == io_ie) {
+	if (address == io_if) {
+		Interrupts::write_if(value);
+	}
+	else if (address == io_ie) {
+		Interrupts::write_ie(value);
+	}
+	else if (address >= io_joyp && address <= io_sc || address == io_if || address == io_ie) {
 		m_imu->write_io(address, value);
 		return;
 	}

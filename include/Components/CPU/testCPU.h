@@ -26,6 +26,9 @@ const std::array<std::string, 8> register_names = { "A", "F", "B", "C", "D", "E"
 
 class testCPU : public bCPU {
 public:
+	//VIRTUAL FUNCTIONS
+	int step() override;
+
 	//TEST INITIALISATION
 	void reset_for_next_test();
 	void update_registers_state(s_registers regs);

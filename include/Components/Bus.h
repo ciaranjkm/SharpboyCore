@@ -1,7 +1,8 @@
 #pragma once
 
-#include "Utilities/Common.h"
-#include "Utilities/IO.h"
+#include "../Utilities/Common.h"
+#include "../Utilities/IO.h"
+#include  "../Interrupts.h"
 #include "Cartridges/Cartridge.h"
 #include "IMU.h"
 #include "PPU.h"
@@ -13,10 +14,10 @@ public:
 	~Bus();
 
 	//UPDATE COMPONENT POINTERS
-	void update_cartridge_ptr(Cartridge* cart);
-	void update_imu_ptr(IMU* imu);
-	void update_ppu_ptr(PPU* ppu);
-	void update_timer_ptr(Timer* timer);
+	bool update_cartridge_ptr(Cartridge* cart);
+	bool update_imu_ptr(IMU* imu);
+	bool update_ppu_ptr(PPU* ppu);
+	bool update_timer_ptr(Timer* timer);
 
 	//MEMORY ACCESS AND REDIRECTION
 	u8 read(u16 address);

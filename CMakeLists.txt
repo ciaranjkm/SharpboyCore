@@ -24,6 +24,6 @@ add_library(SharpboyCore STATIC
 	"src/Cartridges/CartMBC0.cpp" 
 	"src/Cartridges/Cartridge.cpp" 
 
-)
+ "include/InterruptDefs.h" "include/ComponentManager.h" "src/ComponentManager.cpp" "include/Interrupts.h" "src/Interrupts.cpp")
 
 target_include_directories(SharpboyCore PUBLIC "include")

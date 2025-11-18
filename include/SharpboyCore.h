@@ -11,12 +11,8 @@
 #include "Utilities/Logger.h"
 
 #include "Sync.h"
-#include "CPU/CPU.h"
-#include "Bus.h"
-#include "PPU.h"
-#include "Timer.h"
-#include "Cartridges/CartDefs.h"
-#include "Joypad.h"
+#include "ComponentManager.h"
+
 
 struct s_core_context {
 	bool initialised = false;
@@ -63,13 +59,7 @@ private:
 	s_core_context m_core_context;
 	s_core_sst_context m_sst_context;
 
-	//EMU COMPONENTS
-	std::unique_ptr<Cartridge> m_cartridge = nullptr;
-	IMU m_imu;
-	CPU m_cpu;
-	Bus m_bus;
-	PPU m_ppu;
-	Timer m_timer;
+	ComponentManager m_components;
 
 	//TIMING FOR THE SYSTEM
 	Syncroniser m_syncroniser;

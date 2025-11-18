@@ -1,5 +1,5 @@
 #include <Sync.h>
-#include <CPU/CPU.h>
+#include <ComponentManager.h>
 
 Syncroniser::~Syncroniser() {
 	m_cpu = nullptr;
@@ -7,43 +7,18 @@ Syncroniser::~Syncroniser() {
 }
 
 int Syncroniser::advance_cycles() {
-    /*const double target_frame_time = 1.0 / 59.73;
-    const int cycles_per_frame = 70224;
-
-    int cycles_completed = 0;
-
-    while (cycles_completed < cycles_per_frame) {
-        cycles_completed += m_cpu->execute_next_instruction();
-    }
-
-    s_clock_timer.get_current_time();
-    s_clock_timer.calculate_elapsed();
-    double actual_frame_time = s_clock_timer.get_elapsed();
-
-    if (actual_frame_time < target_frame_time) {
-        double sleep_duration = target_frame_time - actual_frame_time;
-        std::this_thread::sleep_for(std::chrono::duration<double>(sleep_duration));
-    }
-
-    s_clock_timer.current_time = std::chrono::steady_clock::now();
-    s_clock_timer.previous_time = s_clock_timer.current_time;
-
-    return cycles_completed;
-    */
-
     int cycles = 0;
     while (cycles < 70224) {
-        cycles += m_cpu->execute_next_instruction();
+		cycles += m_cpu->step();
     }
 
-    //std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-    return 70224;
+    return cycles;
 }
 
-void Syncroniser::attach_components(CPU* cpu, PPU* ppu) {
-	m_cpu = cpu;
-	m_ppu = ppu;
+void Syncroniser::attach_components(ComponentManager* comp_manager) {
+	m_cpu = comp_manager->get_cpu();
+	m_timer = comp_manager->get_timer();
+	m_ppu = comp_manager->get_ppu();
 }
 
 void Syncroniser::real_ticks(int ticks) {
@@ -57,5 +32,6 @@ void Syncroniser::real_cycle() {
 	for (int i = 0; i < 4; i++) {
 		//advance other components
 		m_ppu->tick();
+		m_timer->tick(m_cpu);
 	}
 }

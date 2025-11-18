@@ -1,4 +1,4 @@
-#include <CPU/testCPU.h>
+#include <Components/CPU/testCPU.h>
 
 //TEST INITIALISTION
 void testCPU::reset_for_next_test() {
@@ -144,6 +144,11 @@ void testCPU::add_cycle(u16 address, u8 value, std::string op) {
 }
 
 //VIRTUAL FUNCTIONS
+int testCPU::step() {
+	u8 opcode = read_pc();
+	return execute_opcode(opcode);
+}
+
 u8 testCPU::read(u16 address) {
 	u8 value = m_memory[address];
 	add_cycle(address, value, "r-m");

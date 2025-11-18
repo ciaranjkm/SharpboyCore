@@ -1,26 +1,9 @@
-#include <CPU/bCPU.h>
+#include <Components/CPU/bCPU.h>
 
 //BASE CPU FUNCTIONS FOR OPERATION
 
-int bCPU::execute_next_instruction() {
-	u8 pc = read(m_registers.pc);
-	u8 pc1 = read(m_registers.pc + 1);
-	u8 pc2 = read(m_registers.pc + 2);
-	u8 pc3 = read(m_registers.pc + 3);
-	/*
-	log << std::format(
-		"A:{:02X} F:{:02X} B:{:02X} C:{:02X} D:{:02X} E:{:02X} H:{:02X} L:{:02X} "
-		"SP:{:04X} PC:{:04X} PCMEM:{:02X},{:02X},{:02X},{:02X}\n",
-		m_registers.a, m_registers.f, m_registers.b, m_registers.c,
-		m_registers.d, m_registers.e, m_registers.h, m_registers.l,
-		m_registers.sp, m_registers.pc, pc, pc1, pc2, pc3
-	);
-	*/
-	int cycles = 0;
-	u8 opcode = read_pc();
-
-	cycles = execute_opcode(opcode);
-	return cycles;
+int bCPU::step() {
+	return 0;
 }
 
 //todo make reset based on boot rom or not
@@ -115,11 +98,7 @@ int bCPU::execute_opcode(u8 opcode) {
 
 		// 0x40 -> 0x4f
 	case inst_LD_B_B:        cycles = ld_r_r(m_registers.b, m_registers.b); break;
-	case inst_LD_B_C:        
-		printf("b: %02x\n", m_registers.b);
-		cycles = ld_r_r(m_registers.b, m_registers.c); 
-		printf("b: %02x\n", m_registers.b);
-		break;
+	case inst_LD_B_C:        cycles = ld_r_r(m_registers.b, m_registers.c); break;
 	case inst_LD_B_D:        cycles = ld_r_r(m_registers.b, m_registers.d); break;
 	case inst_LD_B_E:        cycles = ld_r_r(m_registers.b, m_registers.e); break;
 	case inst_LD_B_H:        cycles = ld_r_r(m_registers.b, m_registers.h); break;

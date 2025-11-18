@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Utilities/Common.h"
-#include "Utilities/IO.h"
+#include "../Utilities/Common.h"
+#include "../Utilities/IO.h"
 
 #include <array>
 #include <vector>
@@ -39,7 +39,7 @@ public:
 	PPU();
 
 	void tick();
-	void reset();
+	void reset(bool using_boot_rom = false);
 
 	u8 read(u16 address);
 	void write(u16 address, u8 value);

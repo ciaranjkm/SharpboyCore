@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Utilities/Common.h"
-#include "Utilities/IO.h"
+#include "../Utilities/Common.h"
+#include "../Utilities/IO.h"
 #include "Joypad.h"
 
 #include <vector>
@@ -15,9 +15,9 @@ const int WRAM_SIZE = 0x2000;
 const int HRAM_SIZE = 0x7f;
 
 struct s_imu_io {
-	u8 IE = 0x00;
 	u8 sb = 0x00;
 	u8 sc = 0x00;
+	u8 joyp = 0x00;
 };
 
 class IMU {
@@ -25,7 +25,7 @@ public:
 	IMU();
 
 	//RESET 
-	void reset();
+	void reset(bool using_boot_rom = false);
 
 	//MEMORY ACCESS
 	u8 read(u16 address);

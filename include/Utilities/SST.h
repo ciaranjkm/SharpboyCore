@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <atomic>
 
-#include "../CPU/testCPU.h"
+#include "../Components/CPU/testCPU.h"
 
 #include "NlohmannJSON/json.hpp"
 #include "SST_Defs.h"

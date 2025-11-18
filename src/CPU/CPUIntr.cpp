@@ -1,4 +1,4 @@
-#include <CPU/bCPU.h>
+#include <Components/CPU/bCPU.h>
 
 //8 bit load instructions
 
@@ -1409,12 +1409,15 @@ int bCPU::stop() {
 
 int bCPU::ei() {
 	m_cpu.enable_ime = true;
+	m_cpu.ime = false;
+	m_cpu.ime_count = 1;
 
 	return ticks_0;
 }
 
 int bCPU::di() {
 	m_cpu.ime = false;
+	m_cpu.enable_ime = false;
 
 	return ticks_0;
 }

@@ -3,9 +3,10 @@
 #include <chrono>
 #include <thread>
 
-#include "PPU.h"
-
+class ComponentManager;
 class CPU;
+class PPU;
+class Timer;
 
 struct s_simple_timer {
 	bool timer_active = false;
@@ -44,13 +45,14 @@ public:
 
 	int advance_cycles();
 
-	void attach_components(CPU* cpu, PPU* ppu);
+	void attach_components(ComponentManager* comp_manager);
 
 	void real_ticks(int ticks);
 	void real_cycle();
 private:
 	CPU* m_cpu = nullptr;
 	PPU* m_ppu = nullptr;
+	Timer* m_timer = nullptr;
 
 	s_simple_timer s_clock_timer = {};
 	int m_overrun_cycles = 0;

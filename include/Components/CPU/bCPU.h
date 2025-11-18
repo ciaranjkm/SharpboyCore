@@ -1,5 +1,5 @@
 #pragma once
-#include "Utilities/Common.h"
+#include "../../Utilities/Common.h"
 #include "InstrDefs.h"
 
 #include <format>
@@ -51,6 +51,7 @@ enum e_joined_regs {
 struct s_cpu_context {
 	bool ime = false;
 	bool enable_ime = false;
+	int ime_count = 0;
 	
 	bool halted = false;
 	bool halt_bug = false;
@@ -60,28 +61,22 @@ struct s_cpu_context {
 
 class bCPU {
 public:
-	bCPU() {
-		log.open("logs.txt");
-	}
-	~bCPU() {
-		log.close();
-	}
-
 	//BASE FUNCTIONS FOR CPU OPERATION
-	int execute_next_instruction();
-	void reset(bool using_boot_rom);
+	int execute_opcode(u8 opcode);
+	void reset(bool using_boot_rom = false);
 	s_registers* get_registers();
 
-	std::ofstream log;
+	//VIRTUAL FUNCTIONS
+	virtual int step() = 0;
 
 protected:
 	//BASE CPU MEMBER VARIABLES
 	s_registers m_registers = {};
 	s_cpu_context m_cpu = {};
 
+
 private:
 	//BASE MEMBER FUNCTIONS
-	int execute_opcode(u8 opcode);
 	int execute_cb_opcode(int cycles);
 
 	bool get_flag(e_flags flag) const;

@@ -11,30 +11,25 @@ SharpboyCore::SharpboyCore(std::string roms_path, std::string boot_rom_path, std
 		return;
 	}
 
-	//set pointers for cpu 
-	m_cpu.set_bus_ptr(&m_bus);
-	m_cpu.set_timing_ptr(&m_syncroniser);
+	//LINK COMPONENTS THAT DONT GET DELETED IN COMP MANAGER
+	m_components.link_components();
+	if (!m_components.is_linked()) {
+		m_core_context.initialised = false;
+		return;
+	}
 
-	//attach components to the timing manager :: todo this will sync the emulator to the audio buffer eventually
-	//gather up cycles for a second of audio then play the audio while gathering the next second
-	m_syncroniser.attach_components(&m_cpu, &m_ppu);
+	//ADD SYNCRONISER TO CPU AND ADD COMPONENTS TO SYNCRONISER
+	m_components.add_syncroniser(&m_syncroniser);
+	m_syncroniser.attach_components(&m_components);
 
-	//attach components to the bus
-	m_bus.update_imu_ptr(&m_imu);
-	m_bus.update_ppu_ptr(&m_ppu);
-	m_bus.update_timer_ptr(&m_timer);
-
-	//init and ready to start new emu instance
 	m_core_context.initialised = true;
 	m_core_context.emu_ready = true;
-
 	Logger::log(log_default, "SharpboyCore created successfully");
 }
 
 //DESTROY POINTERS AND CLEANUP
 SharpboyCore::~SharpboyCore() {
-	//delete cartridge object
-	m_cartridge.reset();
+	m_components.reset_components();
 
 	Logger::log(log_default, "Core destroyed successfully");
 }
@@ -71,30 +66,18 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 		}
 	}
 
+	//INIT FIRST TO CLEAR PREVIOUS CART
+	m_components.initialise_components(using_boot_rom);
+
 	//CREATE NEW CARTRIDGE OBJECT AND LOAD ROM
-	if (!create_new_mbc(CART_ROM, 0, 0)) {
+	if (!m_components.assign_cart_type(CART_ROM)) {
 		Logger::log(log_error, "Failed to create new cartridge object");
+
 		rom.clear();
+		boot_rom.clear();
 		return false;
 	}
-
-	if (m_core_context.using_boot_rom) {
-		if (!m_cartridge->load_boot_rom(boot_rom)) {
-			m_core_context.using_boot_rom = false;
-			Logger::log(log_error, "Running without BOOT ROM");
-		}
-	}
-	m_cartridge->load_rom(rom);
-	if (m_core_context.using_boot_rom) {
-		m_cartridge->swap_boot_rom_buffer();
-	}
-
-
-	//UPDATE BUS PTR TO CART ON REINIT TO STOP NULLPTR
-	m_bus.update_cartridge_ptr(m_cartridge.get());
-
-	//RESET CPU
-	m_cpu.reset(m_core_context.using_boot_rom);
+	m_components.load_rom_into_cart(rom, using_boot_rom, boot_rom);
 
 	Logger::log(log_status, "Instance ready");
 	return true;
@@ -102,13 +85,7 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 
 //CALL WHEN CLOSING AN EMULATOR INSTANCE
 void SharpboyCore::cleanup() {
-	//reset components and destroy cart object
-	m_cartridge.reset();
-
-	m_bus.update_cartridge_ptr(nullptr);
-
-	m_cpu.reset(false);
-	m_imu.reset();
+	m_components.reset_components();
 
 	m_core_context.emu_ready = true;
 	Logger::log(log_status, "Cleanup successful, ready for new instance");
@@ -116,7 +93,8 @@ void SharpboyCore::cleanup() {
 
 //RUN TO BE CALLED IN THE MAIN LOOP
 void SharpboyCore::run() {
-	m_syncroniser.advance_cycles();
+	int cycles_advanced = m_syncroniser.advance_cycles();
+	std::this_thread::sleep_for(std::chrono::nanoseconds(10));
 }
 
 //DEBUG + SST
@@ -186,33 +164,6 @@ bool SharpboyCore::read_rom_file(std::vector<u8>& rom, std::string file_name, bo
 
 	bool read_rom = FileReader::read_file_bytes(rom, rom_path);
 	if (!read_rom) {
-		return false;
-	}
-
-	return true;
-}
-
-bool SharpboyCore::create_new_mbc(const e_cart_types cart_type, u8 rom_size, u8 ram_size) {
-	m_cartridge.reset(); //destroy old object just incase
-
-	switch (cart_type) {
-	case CART_ROM:
-		m_cartridge = std::make_unique<CartMBC0>();
-		break;
-
-	case CART_ROM_RAM:
-		m_cartridge = std::make_unique<CartMBC0>(cart_type, true, false);
-		break;
-
-	case CART_ROM_RAM_BATTERY:
-		m_cartridge = std::make_unique<CartMBC0>(cart_type, true, true);
-		break;
-
-	default:
-		return false;
-	}
-
-	if (!m_cartridge) {
 		return false;
 	}
 

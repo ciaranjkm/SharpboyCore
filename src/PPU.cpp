@@ -1,11 +1,17 @@
-#include <PPU.h>
+#include <Components/PPU.h>
 
 PPU::PPU() {
 	m_vram.resize(VRAM_SIZE);
 }
 
-void PPU::reset() {
+void PPU::reset(bool using_boot_rom) {
+	//todo using boot rom init values
 	m_vram.clear();
+	m_vram.resize(VRAM_SIZE);
+
+	m_oam.fill(0x00);
+
+	m_ppu_io = {};
 }
 
 void PPU::tick() {
@@ -13,14 +19,11 @@ void PPU::tick() {
 }
 
 u8 PPU::read(u16 address) {
-	if (address >= io_lcdc && address <= io_wx) {
-		return read_io(address);
-	}
-	else if(address >= 0x8000 && address < 0xa000)  {
+	if(address >= 0x8000 && address < 0xa000)  {
 		return m_vram[(u16)(address - 0x8000)];
 	}
-	else if (address >= 0xe000 && address < 0xfea0) {
-		return m_oam[(u16)(address - 0xe000)];
+	else if (address >= 0xfe00 && address < 0xfea0) {
+		return m_oam[(u16)(address - 0xfe00)];
 	}
 	else {
 		return 0xff;
@@ -28,16 +31,12 @@ u8 PPU::read(u16 address) {
 }
 
 void PPU::write(u16 address, u8 value) {
-	if (address >= io_lcdc && address <= io_wx) {
-		write_io(address, value);
-		return;
-	}
-	else if (address >= 0x8000 && address < 0xa000) {
+	if (address >= 0x8000 && address < 0xa000) {
 		m_vram[(u16)(address - 0x8000)] = value;
 		return;
 	}
-	else if (address >= 0xe000 && address < 0xfea0) {
-		m_oam[(u16)(address - 0xe000)] = value;
+	else if (address >= 0xfe00 && address < 0xfea0) {
+		m_oam[(u16)(address - 0xfe00)] = value;
 		return;
 	}
 	else {

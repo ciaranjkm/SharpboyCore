@@ -125,7 +125,7 @@ void SST::run() {
 			}
 
 			//EXECUTE TEST
-			tCPU->execute_next_instruction();
+			tCPU->step();
 			tCPU->get_test_result(result, final_regs, final_mem, final_cycles);
 
 			if (!result.result) {
