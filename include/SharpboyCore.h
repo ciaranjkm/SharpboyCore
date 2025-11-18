@@ -13,7 +13,6 @@
 #include "Sync.h"
 #include "ComponentManager.h"
 
-
 struct s_core_context {
 	bool initialised = false;
 	bool emu_ready = false;
@@ -35,6 +34,9 @@ public:
 	//CONS | DEST
 	SharpboyCore(std::string roms_path, std::string boot_rom_path, std::string sst_path = "", bool status_out = true, bool debug_out = false);
 	~SharpboyCore();
+
+	//ADJUST PATHS
+	void adjust_path(e_path_type type, std::string new_path);
 
 	//RETURN IS SHARPBOY INITIALISED SUCCESSFULLY
 	bool is_initialised() const;

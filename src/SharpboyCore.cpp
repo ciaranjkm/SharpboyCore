@@ -34,6 +34,21 @@ SharpboyCore::~SharpboyCore() {
 	Logger::log(log_default, "Core destroyed successfully");
 }
 
+//ADJUST PATHS
+void SharpboyCore::adjust_path(e_path_type type, std::string new_path) {
+	if (!FileReader::check_exists(new_path)) {
+		return;
+	}
+
+	std::string old_path = FileReader::get_path(type);
+	FileReader::update_path(type, new_path);
+
+	if (!FileReader::are_paths_valid()) {
+		Logger::log(log_error, std::format("Path was not valid, going back to previous path {}", old_path));
+		FileReader::update_path(type, old_path);
+	}
+}
+
 //GETTERS
 bool SharpboyCore::is_initialised() const {
 	return m_core_context.initialised;
@@ -79,7 +94,7 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 	}
 	m_components.load_rom_into_cart(rom, using_boot_rom, boot_rom);
 
-	Logger::log(log_status, "Instance ready");
+	Logger::log(log_status, "Instance ready\n============================================================");
 	return true;
 }
 
@@ -88,7 +103,7 @@ void SharpboyCore::cleanup() {
 	m_components.reset_components();
 
 	m_core_context.emu_ready = true;
-	Logger::log(log_status, "Cleanup successful, ready for new instance");
+	Logger::log(log_status, "============================================================\nCleanup successful, ready for new instance");
 }
 
 //RUN TO BE CALLED IN THE MAIN LOOP
