@@ -55,7 +55,7 @@ u8 PPU::read_io(u16 address) {
 	case io_scx:
 		return m_ppu_io.scx;
 	case io_ly:
-		return 0x90; // return 0x90 for testing at the moment
+		return 0xff; //testing
 		//return m_ppu_io.ly;
 	case io_lyc:
 		return m_ppu_io.lyc;

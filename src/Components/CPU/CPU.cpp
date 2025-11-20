@@ -47,6 +47,15 @@ int CPU::step() {
 	}
 
 	u8 op = read_pc();
+
+	//DEBUG OUT FOR MOONEYE TEST ROMS PASS/ FAIL 
+	//3 5 8 pass
+	//42 42 42 fail
+	if (op == inst_LD_B_B) {
+		std::cout << std::format("B:{:#x} C:{:#x} D:{:#x} E:{:#x} H:{:#x} L:{:#x}\n",
+			m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l);
+		return 0;
+	}
 	check_halt_bug();
 
 	cycles += execute_opcode(op);

@@ -56,7 +56,7 @@ u8 CartMBC1::read(u16 address) const {
 			return m_rom[address];
 		}
 		else {
-			return 0xff;
+			//TODO ROM BANK 0 BANKING, NOT ENABLED ON SMALL ROMS SO JUST LEAVE FOR NOW
 		}
 	}
 	else if (address < 0x8000) {
@@ -95,17 +95,14 @@ void CartMBC1::write(u16 address, u8 value) {
 		//WRTITES TO ROM BANK REGISTERS, 0x00 BECOMES 0x01
 		u8 bank = (value == 0x00) ? 1 : value;
 		m_rom_bank_number = (bank & 0x60) | (value & 0x1f);
-		printf("ROM BANK WRITE: %02X\n", m_rom_bank_number);
 	}
 	else if (address < 0x6000) {
 		//WRITE TO RAM BANK REGISTER OR IN LARGE ROM MODE, WRITES TO BIT 5/6 OF ROM BANK REGISTER
 		if (!m_large_rom_mode) {
 			m_ram_bank_number = value & 0x03;
-			printf("RAM BANK WRITE: %02X\n", m_ram_bank_number);
 		}
 		else {
 			m_rom_bank_number = (m_rom_bank_number & 0x1f) | ((value & 0x03) << 5);
-			printf("ROM TOP BANK WRITE: %02X\n", (m_rom_bank_number >> 5) & 0x03);
 		}
 	}
 	else if (address < 0x8000) {
@@ -120,8 +117,6 @@ void CartMBC1::write(u16 address, u8 value) {
 		else {
 			m_simple_addressing_mode = true;
 		}
-
-		printf("TOGGLE ADDRESSING MODE: %d\n", m_simple_addressing_mode);
 	}
 }
 
