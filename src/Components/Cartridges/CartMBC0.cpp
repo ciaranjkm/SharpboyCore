@@ -1,15 +1,15 @@
 #include <Components/Cartridges/CartMBC0.h>
 
 CartMBC0::CartMBC0(e_cart_types type, bool ram_enabled, bool battery_enabled) {
-	m_cartridge.ram_enabled = ram_enabled;
-	m_cartridge.battery_enabled = battery_enabled;
+	m_ram_enabled = ram_enabled;
+	m_battery_enabled = battery_enabled;
 	m_cartridge.type = type;
 }
 
 bool CartMBC0::load_rom(const std::vector<u8>& rom) {
 	//DONT CHECK SIZE ONLY 32KB ALLOWED WITH NO BANKING
 	//ROM CANNOT BE ACCESSED SO DONT COPY IT INTO ROM
-	int size = (rom.size() > rom_size ? rom_size : rom.size());
+	size_t size = (rom.size() > rom_size ? rom_size : rom.size());
 	for (int i = 0; i < size; i++) {
 		m_rom[i] = rom[i];
 	}
@@ -50,7 +50,7 @@ u8 CartMBC0::read(u16 address) const {
 		return m_rom[address];
 	}
 	else if (address >= 0xa000 && address < 0xc000) {
-		if (!m_cartridge.ram_enabled) {
+		if (!m_ram_enabled) {
 			return 0xff;
 		}
 
@@ -75,7 +75,7 @@ void CartMBC0::write(u16 address, u8 value) {
 		return;
 	}
 	else if (address >= 0xa000 && address < 0xc000) {
-		if (!m_cartridge.ram_enabled) {
+		if (!m_ram_enabled) {
 			return;
 		}
 

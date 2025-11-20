@@ -25,6 +25,6 @@ add_library(SharpboyCore STATIC
 
 	"src/Utilities/SST.cpp" 
 	"src/Utilities/FileReader.cpp"
-)
+ "include/Components/Cartridges/CartMBC1.h" "src/Components/Cartridges/CartMBC1.cpp")
 
 target_include_directories(SharpboyCore PUBLIC "include")

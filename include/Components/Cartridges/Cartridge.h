@@ -9,17 +9,39 @@ enum e_cart_types {
 	CART_ROM_RAM = 0x08,
 	CART_ROM_RAM_BATTERY = 0x09,
 	CART_MBC1 = 0x01,
+	CART_MBC1_RAM = 0x02,
+	CART_MBC1_RAM_BATTERY = 0x03,
 	CART_MBC2 = 0x05,
 	CART_MBC3 = 0x11,
 	CART_MBC5 = 0x19,
 };
 
+enum e_rom_size {
+	rom_32KB = 0x00,
+	rom_64KB = 0x01,
+	rom_128KB = 0x02,
+	rom_256KB = 0x03,
+	rom_512KB = 0x04,
+	rom_1MB = 0x05,
+	rom_2MB = 0x06,
+	rom_4MB = 0x07,
+	rom_8MB = 0x08,
+	rom_invalid = 0xff,
+};
+
+enum e_ram_size {
+	ram_none = 0x00,
+	ram_unused = 0x01,
+	ram_8KB = 0x02,
+	ram_32KB = 0x03,
+	ram_128KB = 0x04,
+	ram_64KB = 0x05,
+	ram_invalid = 0xff
+};
+
 struct s_cart_context {
 	e_cart_types type = CART_NONE;
 	std::string cart_title = "";
-
-	bool ram_enabled = false;
-	bool battery_enabled = false;
 
 	bool boot_rom = false;
 };
@@ -41,6 +63,6 @@ public:
 	virtual void write(u16 address, u8 value) = 0;
 
 protected:
-	u8 m_bank_register = 0x00;
 	s_cart_context m_cartridge;
+	u8 m_bank_register = 0x00;
 };

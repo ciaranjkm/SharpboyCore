@@ -24,4 +24,7 @@ private:
 	std::array<u8, rom_size> m_rom = std::array<u8, rom_size>();
 	std::array<u8, boot_rom_size> m_boot_rom = std::array<u8, boot_rom_size>();
 	std::array<u8, ram_size> m_ram = std::array<u8, ram_size>();
+
+	bool m_ram_enabled = false;
+	bool m_battery_enabled = false;
 };

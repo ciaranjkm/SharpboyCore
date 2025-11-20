@@ -1,4 +1,5 @@
 #pragma once
 
-#include "Components/Cartridges/Cartridge.h"
-#include "Components/Cartridges/CartMBC0.h"
+#include "Cartridge.h"
+#include "CartMBC0.h"
+#include "CartMBC1.h"

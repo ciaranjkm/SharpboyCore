@@ -55,6 +55,21 @@ bool ComponentManager::assign_cart_type(e_cart_types cart_type) {
 		m_bus.update_cartridge_ptr(m_cartridge.get());
 		return true;
 
+	case CART_MBC1:
+		m_cartridge = std::make_unique<CartMBC1>(cart_type);
+		m_bus.update_cartridge_ptr(m_cartridge.get());
+		return true;
+
+	case CART_MBC1_RAM:
+		m_cartridge = std::make_unique<CartMBC1>(cart_type);
+		m_bus.update_cartridge_ptr(m_cartridge.get());
+		return true;
+
+	case CART_MBC1_RAM_BATTERY:
+		m_cartridge = std::make_unique<CartMBC1>(cart_type);
+		m_bus.update_cartridge_ptr(m_cartridge.get());
+		return true;
+
 	default:
 		return false;
 	}

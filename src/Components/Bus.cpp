@@ -82,6 +82,7 @@ u8 Bus::read(u16 address) {
 
 void Bus::write(u16 address, u8 value) {
 	if (address >= 0x0000 && address < 0x8000) {
+		m_cart->write(address, value);
 		return;
 	}
 	else if (address >= 0x8000 && address < 0xa000) {
