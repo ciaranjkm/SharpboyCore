@@ -12,7 +12,7 @@ struct s_timer_io {
 	u8 tac = 0x00;
 };
 
-const int DEFAULT_TIMA_DELAY = 4;
+const int DEFAULT_TIMA_DELAY = 8;
 
 class Timer {
 public:
@@ -32,6 +32,8 @@ private:
 
 	bool reload_tima = false;
 	int tima_delay = DEFAULT_TIMA_DELAY;
+	bool written_tima = false;
+
 	bool previous_and_result = false;
 
 private:

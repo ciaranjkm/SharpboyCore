@@ -114,11 +114,14 @@ int CPU::handle_interrupt() {
 
 	m_registers.sp--;
 	write(m_registers.sp--, (m_registers.pc >> 8) & 0xFF);
-	write(m_registers.sp, m_registers.pc & 0xFF);         
 
+	//CHECK VECTOR HERE INCASE OF IE/IF PUSH, TOO LATE AFTER LOW BYTE WRITE
+	pending = Interrupts::get_pending_interrupt();
+	u16 vector = Interrupts::get_interrupt_vector(pending);
+
+	write(m_registers.sp, m_registers.pc & 0xFF);         
 	idle_cycle(); 
 
-	u16 vector = Interrupts::get_interrupt_vector(pending);
 	if (vector != 0x00) {
 		m_registers.pc = vector;
 		Interrupts::clear_interrupt(pending);

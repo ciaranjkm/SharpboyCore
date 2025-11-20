@@ -11,11 +11,12 @@ void Timer::tick(CPU* m_cpu) {
 	bool div_bit_selected = (m_timer_io.div & (1 << tac_bit)) != 0x00;
 
 	bool and_result = div_bit_selected && timer_enabled;
-
 	if (previous_and_result && !and_result) {
 		m_timer_io.tima++;
 		if (m_timer_io.tima == 0x00) {
 			reload_tima = true;
+			m_timer_io.tima = 0x00;
+			tima_delay = DEFAULT_TIMA_DELAY;
 		}
 	}
 
@@ -24,16 +25,19 @@ void Timer::tick(CPU* m_cpu) {
 	if (reload_tima) {
 		tima_delay--;
 
-		//after 1 m cycle load tma into tima
-		if (tima_delay != 0) {
-			return;
+		if (tima_delay == 4) {
+			//AFTER ONE M CYCLE LOAD TMA INTO TMA
+			m_timer_io.tima = m_timer_io.tma;
 		}
 
-		m_timer_io.tima = m_timer_io.tma;
-		reload_tima = false;
-		tima_delay = DEFAULT_TIMA_DELAY;
+		if (tima_delay == 0) {
+			reload_tima = false;
+			tima_delay = 0;
 
-		Interrupts::send_interrupt(interrupt_timer);
+			//LOAD TIMA AGAIN WITH TMA INCASE OF A WRITE AND THEN SEND INTERRUPT
+			m_timer_io.tima = m_timer_io.tma;
+			Interrupts::send_interrupt(interrupt_timer);
+		}
 	}
 }
 
@@ -70,6 +74,19 @@ void Timer::write_io(u16 address, u8 value) {
 		return;
 
 	case io_tima:
+		if (reload_tima) {
+			if (tima_delay < DEFAULT_TIMA_DELAY && tima_delay >= DEFAULT_TIMA_DELAY / 2) {
+				//CANCEL TIMA RELOAD ON M CYCLE ONE
+				reload_tima = false;
+				m_timer_io.tima = value;
+				return;
+			}
+			else if (tima_delay <= DEFAULT_TIMA_DELAY / 2 && tima_delay >= 0) {
+				//DONT DO ANYTHING IF ON M CYCLE TWO
+				return;
+			}
+		}
+
 		m_timer_io.tima = value;
 		return;
 
