@@ -46,7 +46,11 @@ int CPU::step() {
 		}
 	}
 
+
+	//OVERLAP OF FETCH AND INTERRUPT CHECK FROM PREVIOUS INSTRUCTION
 	u8 op = read_pc();
+
+	//std::cout << std::format("B:{:#x} C:{:#x}\n", m_registers.b, m_registers.c);
 
 	//DEBUG OUT FOR MOONEYE TEST ROMS PASS/ FAIL 
 	//3 5 8 pass
@@ -66,11 +70,21 @@ int CPU::step() {
 }
 
 u8 CPU::read(u16 address) {
-	idle_cycle();
-	return m_bus->read(address);
+	//tick_components(3);
+	//u8 value = m_bus->read(address);
+	//tick_components(1);
+
+ 	idle_cycle();
+	u8 value = m_bus->read(address);
+
+	return value;
 }
 
 void CPU::write(u16 address, u8 value) {
+	//tick_components(3);
+	//m_bus->write(address, value);
+	//tick_components(1);
+
 	idle_cycle();
 	m_bus->write(address, value);
 }
