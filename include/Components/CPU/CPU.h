@@ -24,6 +24,8 @@ private:
 	Bus* m_bus = nullptr;
 	Syncroniser* m_syncroniser = nullptr;
 
+	e_interrupts interrupt_pending = interrupt_none;
+
 private:
 	//VIRTUAL FUNCTIONS
 	u8 read(u16 address) override;

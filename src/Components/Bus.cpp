@@ -50,7 +50,19 @@ bool Bus::update_timer_ptr(Timer* timer) {
 }
 
 //MEMORY ACCESS AND REDIRECTION
-u8 Bus::read(u16 address) {
+u8 Bus::cpu_read(u16 address) {
+	if (is_dma_active) {
+			if (address == io_if) {
+				return Interrupts::read_if();
+			}
+			else if (address >= 0xff80 && address < 0xffff) {
+				return m_imu->read(address);
+			}
+			else {
+				return 0xff;
+			}
+	}	
+
 	if (address >= 0x0000 && address < 0x8000) {
 		return m_cart->read(address);
 	}
@@ -80,7 +92,24 @@ u8 Bus::read(u16 address) {
 	}
 }
 
-void Bus::write(u16 address, u8 value) {
+void Bus::cpu_write(u16 address, u8 value) {
+	if (is_dma_active) {
+		if (address == io_if) {
+			Interrupts::write_if(value);
+		}
+		else if (address == io_dma) {
+			m_ppu->write_io(address, value);
+			return;
+		}
+		else if (address >= 0xff80 && address < 0xffff) {
+			m_imu->read(address);
+			return;
+		}
+		else {
+			return;
+		}
+	}
+
 	if (address >= 0x0000 && address < 0x8000) {
 		m_cart->write(address, value);
 		return;
@@ -115,7 +144,73 @@ void Bus::write(u16 address, u8 value) {
 	else {
 		return;
 	}
+}
 
+u8 Bus::unblocked_read(u16 address) {
+	if (address >= 0x0000 && address < 0x8000) {
+		return m_cart->read(address);
+	}
+	else if (address >= 0x8000 && address < 0xa000) {
+		return m_ppu->read(address);
+	}
+	else if (address >= 0xa000 && address < 0xc000) {
+		return m_cart->read(address);
+	}
+	else if (address >= 0xc000 && address < 0xe000) {
+		return m_imu->read(address);
+	}
+	else if (address >= 0xe000 && address < 0xfe00) {
+		return m_imu->read((u16)(address - 0x2000));
+	}
+	else if (address >= 0xfe00 && address < 0xfea0) {
+		return m_ppu->read(address);
+	}
+	else if ((address >= 0xff00 && address < 0xff80) || address == 0xffff) {
+		return read_io(address);
+	}
+	else if (address >= 0xff80 && address < 0xffff) {
+		return m_imu->read(address);
+	}
+	else {
+		return 0xff;
+	}
+}
+
+void Bus::unblocked_write(u16 address, u8 value) {
+	if (address >= 0x0000 && address < 0x8000) {
+		m_cart->write(address, value);
+		return;
+	}
+	else if (address >= 0x8000 && address < 0xa000) {
+		m_ppu->write(address, value);
+		return;
+	}
+	else if (address >= 0xa000 && address < 0xc000) {
+		m_cart->write(address, value);
+	}
+	else if (address >= 0xc000 && address < 0xe000) {
+		m_imu->write(address, value);
+		return;
+	}
+	else if (address >= 0xe000 && address < 0xfe00) {
+		m_imu->write((u16)(address - 0x2000), value);
+		return;
+	}
+	else if (address >= 0xfe00 && address < 0xfea0) {
+		m_ppu->write(address, value);
+		return;
+	}
+	else if ((address >= 0xff00 && address < 0xff80) || address == 0xffff) {
+		write_io(address, value);
+		return;
+	}
+	else if (address >= 0xff80 && address < 0xffff) {
+		m_imu->write(address, value);
+		return;
+	}
+	else {
+		return;
+	}
 }
 
 u8 Bus::read_io(u16 address) {
@@ -177,4 +272,13 @@ void Bus::write_io(u16 address, u8 value) {
 	else if (address == io_bank) {
 		m_cart->write(address, value);
 	}
+}
+
+//DMA
+void Bus::dma_active() {
+	is_dma_active = true;
+}
+
+void Bus::dma_inactive() {
+	is_dma_active = false;
 }

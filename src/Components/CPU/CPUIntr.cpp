@@ -815,6 +815,7 @@ int bCPU::add_hl_rr(u16 src) {
 
 int bCPU::add_sp_e() {
 	s8 e = read_pc();
+	printf("\n\n\n\n\n\n\n\n\n");
 	u16 result = m_registers.sp + e;
 
 	u8 sp_low = (u8)(m_registers.sp & 0xff);

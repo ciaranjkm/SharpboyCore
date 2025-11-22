@@ -12,6 +12,8 @@ void ComponentManager::link_components() {
 		return;
 	}
 
+	m_ppu.set_bus_ptr(&m_bus);
+
 	m_components_linked = true;
 }
 

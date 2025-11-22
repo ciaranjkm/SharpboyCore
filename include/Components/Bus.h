@@ -21,11 +21,18 @@ public:
 	bool update_timer_ptr(Timer* timer);
 
 	//MEMORY ACCESS AND REDIRECTION
-	u8 read(u16 address);
-	void write(u16 address, u8 value);
+	u8 cpu_read(u16 address);
+	void cpu_write(u16 address, u8 value);
+
+	u8 unblocked_read(u16 address);
+	void unblocked_write(u16 address, u8 value);
 
 	u8 read_io(u16 address);
 	void write_io(u16 address, u8 value);
+
+	//DMA
+	void dma_active();
+	void dma_inactive();
 
 private:
 	//COMPONENT POINTERS
@@ -33,4 +40,7 @@ private:
 	IMU* m_imu = nullptr;
 	PPU* m_ppu = nullptr;
 	Timer* m_timer = nullptr;
+
+	bool is_dma_active = false;
+	int ticks_until_dma_blocked = 0;
 };

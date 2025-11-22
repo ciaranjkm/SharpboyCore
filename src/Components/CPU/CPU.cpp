@@ -51,6 +51,10 @@ int CPU::step() {
 	u8 op = read_pc();
 
 	//std::cout << std::format("B:{:#x} C:{:#x}\n", m_registers.b, m_registers.c);
+	//std::cout << std::format("A:{:#x}\n", m_registers.a);
+
+	//std::cout << std::format("B:{:#x} C:{:#x} D:{:#x} E:{:#x} H:{:#x} L:{:#x}\n",
+		//m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l);
 
 	//DEBUG OUT FOR MOONEYE TEST ROMS PASS/ FAIL 
 	//3 5 8 pass
@@ -69,24 +73,31 @@ int CPU::step() {
 	return cycles;
 }
 
-u8 CPU::read(u16 address) {
-	//tick_components(3);
-	//u8 value = m_bus->read(address);
-	//tick_components(1);
+u8 CPU::read(u16 address) { 
+	//idk why this works but it does it is probably not what actually happens
+	
+	//T1 ADDRESS ON BUS 
+	//T2 READ DATA
+	//T3 INTERNAL OPERATION
+	//T4 INTERNAL OPERATION
 
- 	idle_cycle();
-	u8 value = m_bus->read(address);
-
+	tick_components(2);			
+	u8 value = m_bus->cpu_read(address);	
+	tick_components(2);					
 	return value;
 }
 
 void CPU::write(u16 address, u8 value) {
-	//tick_components(3);
-	//m_bus->write(address, value);
-	//tick_components(1);
+	//idk why this works but it does it is probably not what actually happens
 
-	idle_cycle();
-	m_bus->write(address, value);
+	//T1 ADDRESS ON BUS
+	//T2 WRITE DATA
+	//T3 INTERNAL OPERATION
+	//T4 INTERNAL OPERATION
+
+	tick_components(2);		
+	m_bus->cpu_write(address, value);	
+	tick_components(2);					
 }
 
 u8 CPU::read_pc(bool read_interrupt) {
@@ -111,12 +122,8 @@ void CPU::idle_cycle() {
 }
 
 int CPU::handle_interrupt() {
-	if (!m_cpu.ime) {
-		return 0;
-	}
-
-	e_interrupts pending = Interrupts::get_pending_interrupt();
-	if (pending == interrupt_none) {
+	interrupt_pending = Interrupts::get_pending_interrupt();
+	if (!m_cpu.ime || interrupt_pending == interrupt_none) {
 		return 0;
 	}
 
@@ -130,15 +137,15 @@ int CPU::handle_interrupt() {
 	write(m_registers.sp--, (m_registers.pc >> 8) & 0xFF);
 
 	//CHECK VECTOR HERE INCASE OF IE/IF PUSH, TOO LATE AFTER LOW BYTE WRITE
-	pending = Interrupts::get_pending_interrupt();
-	u16 vector = Interrupts::get_interrupt_vector(pending);
+	interrupt_pending = Interrupts::get_pending_interrupt();
+	u16 vector = Interrupts::get_interrupt_vector(interrupt_pending);
 
 	write(m_registers.sp, m_registers.pc & 0xFF);         
 	idle_cycle(); 
 
 	if (vector != 0x00) {
 		m_registers.pc = vector;
-		Interrupts::clear_interrupt(pending);
+		Interrupts::clear_interrupt(interrupt_pending);
 
 		return ticks_20;
 	}

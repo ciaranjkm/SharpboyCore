@@ -85,7 +85,7 @@ bool SharpboyCore::emu_init(std::string rom_file_name, bool using_boot_rom) {
 	m_components.initialise_components(using_boot_rom);
 
 	//CREATE NEW CARTRIDGE OBJECT AND LOAD ROM
-	if (!m_components.assign_cart_type((e_cart_types)rom[0x147])) {
+	if (!m_components.assign_cart_type(CART_ROM)) {
 		Logger::log(log_error, "Failed to create new cartridge object");
 
 		rom.clear();
