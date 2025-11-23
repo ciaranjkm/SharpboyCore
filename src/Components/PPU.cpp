@@ -129,7 +129,7 @@ u8 PPU::read_io(u16 address) {
 	case io_lyc:
 		return m_ppu_io.lyc;
 	case io_dma:
-		return m_dma.start_byte;
+		return m_ppu_io.dma;
 	case io_bgp:
 		return m_ppu_io.bgp;
 	case io_obp0:
@@ -185,6 +185,8 @@ void PPU::write_io(u16 address, u8 value) {
 		m_dma.start_new = true;
 		m_dma.start_byte = value;
 		m_dma.ticks_since_start = 0;
+
+		m_ppu_io.dma = value;
 
 		printf("new dma 0x%02X\n", m_dma.start_byte);
 		return;

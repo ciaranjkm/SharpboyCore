@@ -19,7 +19,6 @@ bool CartMBC0::load_rom(const std::vector<u8>& rom) {
 
 bool CartMBC0::load_boot_rom(const std::vector<u8>& rom) {
 	if (rom.size() != boot_rom_size) {
-		Logger::log(log_error, "BOOT ROM is not valid size!");
 		return false;
 	}
 

@@ -57,10 +57,6 @@ u8 Bus::cpu_read(u16 address) {
 		return m_cart->read(address);
 	}
 	else if (address >= 0x8000 && address < 0xa000) {
-		if (is_dma_active) {
-			return 0xff;
-		}
-
 		return m_ppu->read(address);
 	}
 	else if (address >= 0xa000 && address < 0xc000) {
@@ -91,22 +87,7 @@ u8 Bus::cpu_read(u16 address) {
 }
 
 void Bus::cpu_write(u16 address, u8 value) {
-	//DONT ALLOW CPU TO WRITE TO THE BUS WHEN DMA IS ACTIVE ONLY TO IE, DMA REGISTER AND HRAM
-	if (is_dma_active) {
-		if (address == io_ie) {
-			Interrupts::write_ie(value);
-		}
-		else if (address == io_dma) {
-			m_ppu->write_io(address, value);
-		}
-		else if (address >= 0xff80 && address < 0xffff) {
-			m_imu->read(address);
-		}
-		else {
-			return;
-		}
-	}
-	
+	//DONT ALLOW CPU TO WRITE TO THE BUS WHEN DMA IS ACTIVE ONLY TO IE, DMA REGISTER AND HRAM	
 	if (address >= 0x0000 && address < 0x8000) {
 		m_cart->write(address, value);
 		return;
@@ -252,7 +233,7 @@ void Bus::write_io(u16 address, u8 value) {
 	else if (address == io_ie) {
 		Interrupts::write_ie(value);
 	}
-	else if (address >= io_joyp && address <= io_sc || address == io_if || address == io_ie) {
+	else if (address >= io_joyp && address <= io_sc) {
 		m_imu->write_io(address, value);
 		return;
 	}

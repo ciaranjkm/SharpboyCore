@@ -45,7 +45,7 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	}
 	if (m_core_context.using_boot_rom) {
 		if (!FileReader::read_rom_file(boot_rom, "BOOT.bin", true)) {
-			return false;
+			m_core_context.using_boot_rom = false;
 		}
 	}
 
@@ -59,6 +59,9 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	m_components.initialise_components(using_boot_rom);
 	m_components.load_rom_into_cart(rom, using_boot_rom, boot_rom);
 
+	//START SYNCRONISER TIMER
+	m_syncroniser.start_syncroniser();
+
 	m_core_context.emu_ready = false;
 	m_core_context.emu_active = true;
 	return true;
@@ -71,9 +74,9 @@ void SharpboyCore::cleanup_current_instance() {
 	m_core_context.emu_ready = true;
 }
 
-void SharpboyCore::run() {
+int SharpboyCore::run() {
 	int cycles_advanced = m_syncroniser.advance_cycles();
-	std::this_thread::sleep_for(std::chrono::nanoseconds(10));
+	return cycles_advanced;
 }
 
 void SharpboyCore::run_ssts(bool show_all_results, bool prefixed) {

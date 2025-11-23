@@ -13,7 +13,6 @@ bool CartMBC1::load_rom(const std::vector<u8>& rom) {
 	m_ram.resize(m_ram_size);
 
 	if (rom.size() < m_rom_size) {
-		Logger::log(log_error, "ROM is too large for allocated memory");
 		return false;
 	}
 
@@ -26,7 +25,6 @@ bool CartMBC1::load_rom(const std::vector<u8>& rom) {
 
 bool CartMBC1::load_boot_rom(const std::vector<u8>& rom) {
 	if (rom.size() != boot_rom_size) {
-		Logger::log(log_error, "BOOT ROM is not valid size");
 		return false;
 	}
 

@@ -4,18 +4,40 @@
 Syncroniser::~Syncroniser() {
 	m_cpu = nullptr;
 	m_ppu = nullptr;
+	m_timer = nullptr;
+}
+
+void Syncroniser::start_syncroniser() {
+	m_sync.start_clock();
 }
 
 int Syncroniser::advance_cycles() {
-	//TODO SYNC TO AUDIO BUFFER, RUN AT 100% CPU SPEED GATHERING AUDIO BUFFER, AND SETTING FLAGS TO LET THE USER KNOW THE BUFFER IS READY
-	//FOR DISPLAY VBLANK FOR UPDATE TEXTURE
-	//FOR AUDIO USE DOUBLE BUFFER, ONCE GENERATED ONE SECOND, SET FLAG AND RELEASE BUFFER
-    int cycles = 0;
-    while (cycles < 70224) {
-		cycles += m_cpu->step();
-    }
+	//SYNCED WITH CHRONO FOR NOW AT ROUGHLY CLOCK SPEED MAYBE 1% SLOWER, GOOD ENOUGH FOR VIDEO SYNC WILL UPDATE FOR AUDIO ANOTHER TIME
+	const auto time_now = std::chrono::high_resolution_clock::now();
+	const auto time_delta = time_now - m_sync.previous_time;
+	m_sync.previous_time = time_now;
 
-    return cycles;
+	const auto nanos = std::chrono::duration_cast<std::chrono::nanoseconds>(time_delta).count();
+	const uint64_t target_ticks = (nanos * CPU_CLOCK) / 1000000000;
+
+	m_sync.overrun_ticks += target_ticks;
+
+	int ticks_completed = 0;
+
+	while (m_sync.overrun_ticks > 0) {
+		int step_ticks = m_cpu->step();
+		ticks_completed += step_ticks;
+		m_sync.overrun_ticks -= step_ticks;
+	}
+
+	if (m_sync.overrun_ticks < -10000) { // If more than 10k cycles ahead
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
+	}
+	else {
+		std::this_thread::sleep_for(std::chrono::microseconds(10));
+	}
+
+	return ticks_completed;
 }
 
 void Syncroniser::attach_components(ComponentManager* comp_manager) {

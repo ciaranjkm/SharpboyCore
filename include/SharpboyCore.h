@@ -76,7 +76,7 @@ public:
 	void cleanup_current_instance();
 
 	//RUN TO BE CALLED IN THE MAIN LOOP
-	void run();
+	int run();
 
 	//JOYPAD
 	void set_new_joypad_state(s_joypad_state state);
