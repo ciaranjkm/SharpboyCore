@@ -1,17 +1,8 @@
 #include <Utilities/SST.h>
 
 //INITIALISATION
-SST::SST(std::string sst_path, int start_test, bool prefixed) {
-	initialised.store(false);
-	
-	if (!std::filesystem::exists(sst_path)) {
-		return;
-	}
-
-	this->start_test = start_test;
-	if (this->start_test % SMALL_TEST_COUNT != 0) {
-		return;
-	}
+SST::SST(std::filesystem::path sst_path, bool prefixed) {
+	FileReader::update_path(path_sst, sst_path);
 
 	this->prefixed = prefixed;
 	this->sst_path = sst_path;
@@ -40,24 +31,24 @@ void SST::run() {
 
 	//LOOP SMALL TEST COUNT 0-16
 	for (int i = 0; i < SMALL_TEST_COUNT; i++) {
-		std::string test_name = prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i];
+		std::string test_name = prefixed ? sst_test_names_prefixed[i] : sst_test_names_normal[i];
 
 		//CREATE RESULT FOR TEST
 		s_test_result& result = m_results[i];
-		result.test_num = start_test + i;
+		result.test_num = i;
 		result.prefixed = prefixed;
 		result.msg = std::format("{} | ", test_name);
 		completed_tests_count++;
 
 		//CHECK FOR TEST FILE AND READ IT
-		std::string test_file_name = std::format("{}", prefixed ? sst_test_names_prefixed[start_test + i] : sst_test_names_normal[start_test + i]);
+		std::string test_file_name = std::format("{}", prefixed ? sst_test_names_prefixed[i] : sst_test_names_normal[i]);
 		if (test_file_name == invalid_json_file_name) {
-			result.msg.append(std::format("INVALID OPCODE {}", start_test + i));
+			result.msg.append(std::format("INVALID OPCODE {:#x}", i));
 			result.result = false;
 			continue;
 		}
 		
-		std::string file_name = std::format("{}/{}", sst_path, test_file_name);
+		std::string file_name = std::format("{}/{}", sst_path.filename().string(), test_file_name);
 
 		if (!std::filesystem::exists(file_name)) {
 			result.result = false;

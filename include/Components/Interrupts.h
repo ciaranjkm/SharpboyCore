@@ -3,6 +3,11 @@
 #include "InterruptDefs.h"
 #include "../Common.h"
 
+/*
+	Interrupt manager for Sharpboy, using it as static to allow multiple components to access the same IF and IE.
+	TOOO maybe make this not static to allow multiple instances of SharpboyCore
+*/
+
 class Interrupts {
 public:
 	static void send_interrupt(e_interrupts type);

@@ -13,6 +13,8 @@ enum e_log_type {
     log_sst_status,
 };
 
+//TODO CHANGE THIS LOGGER CLASS TO A THREAD THAT YOU PUSH MESSAGES TO TO ALLOW MAIN THREAD TO RUN CORRECT SPEED
+
 class Logger {
 public:
     static void update_logger(bool status_enabled, bool debug_enabled) {

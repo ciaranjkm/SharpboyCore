@@ -6,8 +6,14 @@ PPU::PPU() {
 	m_vram.resize(VRAM_SIZE);
 }
 
-void PPU::set_bus_ptr(Bus* bus) {
+bool PPU::set_bus_ptr(Bus* bus) {
 	m_bus = bus;
+
+	if (m_bus) {
+		return true;
+	}
+	
+	return false;
 }
 
 void PPU::reset(bool using_boot_rom) {
@@ -24,12 +30,10 @@ void PPU::tick() {
 	m_ppu_ticks++;
 
 	if ((m_ppu_ticks % SCANLINE_LENGTH) == 0) {
-		//NEXT SCANLINE
 		m_ppu_io.ly++;
 	}
 
 	if (m_ppu_ticks == VBLANK_DOT_TIME) {
-		//printf("ppu ticks on vblank: %d\n", m_ppu_ticks);
 		Interrupts::send_interrupt(interrupt_vblank);
 	}
 
@@ -67,9 +71,6 @@ void PPU::dma_tick() {
 			u8 value = m_bus->unblocked_read(m_dma.dma_address++);
 
 			m_oam[m_dma.cycles_this_transfer - 1] = value;
-
-			//ADD CURRENT ADDRESS TO BUS IF CPU TRIES TO READ, USE THIS VALUE INSTEAD OAM WINS CONFLICT
-			m_bus->dma_overwrite_bus_address(m_dma.dma_address);
 		}
 
 		if (m_dma.cycles_this_transfer >= DEFAULT_DMA_CYCLES) {
@@ -84,7 +85,6 @@ void PPU::dma_tick() {
 		m_dma.cycles_this_transfer = 0;
 
 		m_dma.dma_address = (m_dma.start_byte << 8) & 0xff00;
-		m_bus->dma_overwrite_bus_address(m_dma.dma_address);
 	}
 }
 

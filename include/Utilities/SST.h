@@ -11,10 +11,18 @@
 
 const int SMALL_TEST_COUNT = 256;
 
+/*
+	A class to run and execute single step tests. Everything needed is contained within this class using a test CPU to execute and report
+	back on instructions. The test CPU will output the results to the console with the fail reason test and text number, this isnt usable
+	in my GUI version, only in CLI as I was only using this to develop the CPU. 
+
+	You can make a global version of this class and use it with the get_results() function to use in a GUI version.
+*/
+
 class SST {
 public:
 	//INITIALISTAION
-	SST(std::string sst_path, int start_test, bool prefixed);
+	SST(std::filesystem::path sst_path, bool prefixed);
 	~SST();
 	
 	//EXECUTION
@@ -32,8 +40,7 @@ private:
 	std::atomic_bool completed_tests = false;
 	std::atomic<int> completed_tests_count = 0;
 
-	std::string sst_path = "";
-	int start_test = 0;
+	std::filesystem::path sst_path = "";
 	
 	bool prefixed = false;
 

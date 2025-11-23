@@ -33,7 +33,6 @@ public:
 	//DMA
 	void dma_active();
 	void dma_inactive();
-	void dma_overwrite_bus_address(u16 address);
 
 private:
 	//COMPONENT POINTERS
@@ -43,6 +42,4 @@ private:
 	Timer* m_timer = nullptr;
 
 	bool is_dma_active = false;
-	u16 dma_overwrite_address = 0x0000;
-	int ticks_until_dma_blocked = 0;
 };

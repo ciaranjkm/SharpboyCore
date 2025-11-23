@@ -29,23 +29,16 @@ bool Interrupts::check_for_interrupt() {
 }
 
 e_interrupts Interrupts::get_new_pending() {
-	int bit = -1;
+	currently_pending = interrupt_none;
+	
 	u8 interrupt = ((IF & IE) & 0x1f);
-
 	for (int i = 0; i < 5; i++) {
 		if (interrupt & (1 << i)) {
-			bit = i;
+			currently_pending = (e_interrupts)i;
 			break;
 		}
-
-		bit = -1;
 	}
 
-	currently_pending = (e_interrupts)bit;
-
-	if (currently_pending == interrupt_serial) {
-		int x = 0;
-	}
 	return currently_pending;
 }
 

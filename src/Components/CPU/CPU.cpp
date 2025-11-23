@@ -11,11 +11,9 @@ bool CPU::set_bus_ptr(Bus* bus) {
 	m_bus = bus;
 
 	if (!m_bus) {
-		Logger::log(log_error, "CPU bus given nullptr");
 		return false;
 	}
 
-	Logger::log(log_debug, "CPU set bus pointer");
 	return true;
 }
 
@@ -23,11 +21,9 @@ bool CPU::set_sync_ptr(Syncroniser* syncroniser) {
 	m_syncroniser = syncroniser;
 
 	if (!m_syncroniser) {
-		Logger::log(log_error, "CPU syncroniser given nullptr");
 		return false;
 	}
 
-	Logger::log(log_debug, "CPU set syncroniser pointer");
 	return true;
 }
 

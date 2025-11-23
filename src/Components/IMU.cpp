@@ -1,20 +1,14 @@
 #include <Components/IMU.h>
 
-IMU::IMU() {
-	m_wram.resize(WRAM_SIZE);
-	m_hram.resize(HRAM_SIZE);
-}
-
 //RESET
 void IMU::reset(bool using_boot_rom) {
-	//todo init to using boot rom values
 	m_wram.clear();
 	m_wram.resize(WRAM_SIZE);
 
 	m_hram.clear();
 	m_hram.resize(HRAM_SIZE);
 
-	m_io = {};
+	m_io = using_boot_rom ? s_imu_io() : POST_BOOT_ROM_IO;
 }
 
 //MEMORY ACCESS

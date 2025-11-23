@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../Common.h"
-
 struct s_joypad_state {
 	bool up = false;
 	bool down = false;
@@ -14,8 +12,3 @@ struct s_joypad_state {
 	bool a = false;
 	bool b = false;
 };
-
-static inline u8 convert_to_joypad_value(s_joypad_state& joypad_state) {
-
-	return 0xff;
-}

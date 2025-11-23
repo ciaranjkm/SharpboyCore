@@ -1,28 +1,24 @@
 #include <ComponentManager.h>
 
 //COMPONENT LINKING
-void ComponentManager::link_components() {
-	//link bus to cpu
-	m_cpu.set_bus_ptr(&m_bus);
-
-	m_components_linked = false;
-
-	//link components to the bus
-	if (!m_bus.update_imu_ptr(&m_imu) || !m_bus.update_ppu_ptr(&m_ppu) || !m_bus.update_timer_ptr(&m_timer)) {
-		return;
+bool ComponentManager::link_components(Syncroniser* syncroniser) {
+	//LINK BUS TO THE CPU / PPU (dma)
+	if (!m_cpu.set_bus_ptr(&m_bus) || !m_ppu.set_bus_ptr(&m_bus)) {
+		return false;
 	}
 
-	m_ppu.set_bus_ptr(&m_bus);
+	//LINK OTHER COMPS TO THE BUS 
+	if (!m_bus.update_imu_ptr(&m_imu) || !m_bus.update_ppu_ptr(&m_ppu) || !m_bus.update_timer_ptr(&m_timer)) {
+		return false;
+	}
 
-	m_components_linked = true;
-}
+	//LINK SYNCRONISER TO CPU TO ALLOW IT TO TICK THE SYSTEM
+	if (!m_cpu.set_sync_ptr(syncroniser)) {
+		return false;
+	}
 
-bool ComponentManager::is_linked() const {
-	return m_components_linked;
-}
-
-void ComponentManager::add_syncroniser(Syncroniser* m_sync) {
-	m_cpu.set_sync_ptr(m_sync);
+	syncroniser->attach_components(this);
+	return true;
 }
 
 //RESET AND INITIALISE ALL COMPONENTS
@@ -35,7 +31,6 @@ void ComponentManager::initialise_components(bool using_boot_rom) {
 
 bool ComponentManager::assign_cart_type(e_cart_types cart_type) {
 	if (m_cartridge) {
-		Logger::log(log_error, "Already a cartridge object");
 		return false;
 	}
 

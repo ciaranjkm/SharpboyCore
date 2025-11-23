@@ -6,11 +6,6 @@
 
 #include <vector>
 
-/*
-	Internal Memory Unit,
-		holds hram, wram, echo and io that needs somewhere to live ;(
-*/
-
 const int WRAM_SIZE = 0x2000;
 const int HRAM_SIZE = 0x7f;
 
@@ -20,10 +15,10 @@ struct s_imu_io {
 	u8 joyp = 0x00;
 };
 
+const s_imu_io POST_BOOT_ROM_IO = {};
+
 class IMU {
 public:
-	IMU();
-
 	//RESET 
 	void reset(bool using_boot_rom = false);
 
@@ -38,7 +33,8 @@ public:
 	void update_joypad(s_joypad_state new_joypad_state);
 
 private:
-	std::vector<u8> m_wram = std::vector<u8>();
+	//MEMBER VARIABLES
+	std::vector<u8> m_wram = std::vector<u8>(); //these should be arrays
 	std::vector<u8> m_hram = std::vector<u8>();
 
 	s_imu_io m_io = {};

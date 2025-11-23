@@ -21,39 +21,40 @@
 */
 
 struct s_filereader_paths {
-	std::string rom_file_path = "";
-	std::string boot_rom_file_path = "";
-	bool valid_paths = false;
+	std::filesystem::path rom_base_path = "";
+	std::filesystem::path boot_rom_path = "";
 
-	//NOT REQUIRED, WILL CHECK IF TESTS EXIST SEPERATELY
-	std::string sst_path = "";
+	std::filesystem::path sst_base_path = "";
 };
 
 enum e_path_type {
 	path_roms,
 	path_boot,
 	path_sst,
+	path_none,
 };
 
 const std::string settings_file_name = "settings.txt";
 
 class FileReader {
 public:
-	//GETTERS + SETTERS
-	static bool are_paths_valid();
-	static void update_paths(std::string roms, std::string boot, std::string sst);
+	//READ SETTINGS FILE FOR PATHS
+	static void read_paths_from_settings();
 
-	static void update_path(e_path_type type, std::string path);
-	static std::string get_path(e_path_type type);
+	//SET SET BASE DIRECTORIES
+	static void update_path(e_path_type type, std::filesystem::path new_path);
+	static std::filesystem::path get_path(e_path_type type);
 
-	static bool check_exists(std::string path);
-
-	//FILE READING
-	static bool read_file_bytes(std::vector<u8>& rom_dest, std::string path);
+	//READ FILE IN BYTES
+	static bool read_rom_file(std::vector<u8>& file_dest, std::filesystem::path file_name, bool boot_rom = false);
 
 private:
 	//MEMBER VARIABLES
 	static s_filereader_paths m_filereader_paths;
+
+private:
+	//MEMBER FUNCTIONS
+	static bool does_exist(e_path_type path, std::filesystem::path file_name = std::filesystem::path());
 };
 
 inline s_filereader_paths FileReader::m_filereader_paths = {};

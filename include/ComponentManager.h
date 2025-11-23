@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Sync.h"
 #include "Components/CPU/CPU.h"
 #include "Components/Bus.h"
 #include "Components/IMU.h"
@@ -18,13 +19,12 @@ enum e_components {
 	comp_cart
 };
 
+class Syncroniser;
+
 class ComponentManager {
 public:
 	//COMPONENT LINKING
-	void link_components();
-	bool is_linked() const;
-
-	void add_syncroniser(Syncroniser* m_sync);
+	bool link_components(Syncroniser* syncroniser);
 
 	//NEW INSTANCE | RESET AND INITIALSE ALL COMPONENTS
 	void initialise_components(bool using_boot_rom);

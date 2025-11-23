@@ -56,7 +56,7 @@ class PPU {
 public:
 	PPU();
 
-	void set_bus_ptr(Bus* bus);
+	bool set_bus_ptr(Bus* bus);
 
 	void tick();
 	void dma_tick();
