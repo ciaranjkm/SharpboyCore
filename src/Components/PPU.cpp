@@ -46,7 +46,7 @@ void PPU::dma_tick() {
 		m_dma.ticks_since_start++;
 
 		//ALLIGN TO CPU CLOCK + 1 M XYX
-		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 2) {
+		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 1) {
 			m_bus->dma_active();
 
 			if (!m_dma.active) {
@@ -67,6 +67,9 @@ void PPU::dma_tick() {
 			u8 value = m_bus->unblocked_read(m_dma.dma_address++);
 
 			m_oam[m_dma.cycles_this_transfer - 1] = value;
+
+			//ADD CURRENT ADDRESS TO BUS IF CPU TRIES TO READ, USE THIS VALUE INSTEAD OAM WINS CONFLICT
+			m_bus->dma_overwrite_bus_address(m_dma.dma_address);
 		}
 
 		if (m_dma.cycles_this_transfer >= DEFAULT_DMA_CYCLES) {
@@ -81,6 +84,7 @@ void PPU::dma_tick() {
 		m_dma.cycles_this_transfer = 0;
 
 		m_dma.dma_address = (m_dma.start_byte << 8) & 0xff00;
+		m_bus->dma_overwrite_bus_address(m_dma.dma_address);
 	}
 }
 

@@ -25,10 +25,10 @@ void Interrupts::write_ie(u8 value) {
 }
 
 bool Interrupts::check_for_interrupt() {
-	return ((IF & IE) & 0x1f) != 0;
+	return currently_pending != interrupt_none;
 }
 
-e_interrupts Interrupts::get_pending_interrupt() {
+e_interrupts Interrupts::get_new_pending() {
 	int bit = -1;
 	u8 interrupt = ((IF & IE) & 0x1f);
 
@@ -41,7 +41,12 @@ e_interrupts Interrupts::get_pending_interrupt() {
 		bit = -1;
 	}
 
-	return (e_interrupts)bit;
+	currently_pending = (e_interrupts)bit;
+	return currently_pending;
+}
+
+e_interrupts Interrupts::get_current_pending() {
+	return currently_pending;
 }
 
 u16 Interrupts::get_interrupt_vector(e_interrupts type) {

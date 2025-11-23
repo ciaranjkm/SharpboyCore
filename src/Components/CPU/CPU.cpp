@@ -36,25 +36,18 @@ int CPU::step() {
 	int cycles = 0;
 
 	if (m_cpu.halted) {
-		if (Interrupts::check_for_interrupt()) {
-			m_cpu.halted = false;
-			return 0;
+		Interrupts::get_new_pending();
+		int intr_handled = handle_interrupt();
+		if (intr_handled > 0) {
+			return intr_handled;
 		}
 		else {
 			tick_components(1);
-			return cycles += 1;
+			return 1;
 		}
 	}
 
-
-	//OVERLAP OF FETCH AND INTERRUPT CHECK FROM PREVIOUS INSTRUCTION
 	u8 op = read_pc();
-
-	//std::cout << std::format("B:{:#x} C:{:#x}\n", m_registers.b, m_registers.c);
-	//std::cout << std::format("A:{:#x}\n", m_registers.a);
-
-	//std::cout << std::format("B:{:#x} C:{:#x} D:{:#x} E:{:#x} H:{:#x} L:{:#x}\n",
-		//m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l);
 
 	//DEBUG OUT FOR MOONEYE TEST ROMS PASS/ FAIL 
 	//3 5 8 pass
@@ -64,6 +57,7 @@ int CPU::step() {
 			m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l);
 		return 0;
 	}
+
 	check_halt_bug();
 
 	cycles += execute_opcode(op);
@@ -77,13 +71,13 @@ u8 CPU::read(u16 address) {
 	//idk why this works but it does it is probably not what actually happens
 	
 	//T1 ADDRESS ON BUS 
-	//T2 READ DATA
-	//T3 INTERNAL OPERATION
+	//T2 INTERNAL OPERATION
+	//T3 READ DATA IS AVAILABLE
 	//T4 INTERNAL OPERATION
 
-	tick_components(2);			
+	tick_components(3);			
 	u8 value = m_bus->cpu_read(address);	
-	tick_components(2);					
+	tick_components(1);					
 	return value;
 }
 
@@ -91,16 +85,17 @@ void CPU::write(u16 address, u8 value) {
 	//idk why this works but it does it is probably not what actually happens
 
 	//T1 ADDRESS ON BUS
-	//T2 WRITE DATA
-	//T3 INTERNAL OPERATION
+	//T2 INTERNAL OPERATION
+	//T3 WRITE HAPPENS
 	//T4 INTERNAL OPERATION
 
-	tick_components(2);		
+	tick_components(3);		
 	m_bus->cpu_write(address, value);	
-	tick_components(2);					
+	tick_components(1);					
 }
 
 u8 CPU::read_pc(bool read_interrupt) {
+	Interrupts::get_new_pending();
 	u8 value = read(m_registers.pc);
 	m_registers.pc++;
 	
@@ -122,22 +117,27 @@ void CPU::idle_cycle() {
 }
 
 int CPU::handle_interrupt() {
-	interrupt_pending = Interrupts::get_pending_interrupt();
-	if (!m_cpu.ime || interrupt_pending == interrupt_none) {
+	if (Interrupts::get_new_pending() == interrupt_none) {
 		return 0;
 	}
 
-	idle_cycle();    
+	m_cpu.halted = false;
+
+	if (!m_cpu.ime) {
+		return 0;
+	}
+
+	idle_cycle();
 	idle_cycle();
 
-	m_cpu.ime = false;
 	m_cpu.halted = false;
+	m_cpu.ime = false;
 
 	m_registers.sp--;
 	write(m_registers.sp--, (m_registers.pc >> 8) & 0xFF);
 
 	//CHECK VECTOR HERE INCASE OF IE/IF PUSH, TOO LATE AFTER LOW BYTE WRITE
-	interrupt_pending = Interrupts::get_pending_interrupt();
+	interrupt_pending = Interrupts::get_new_pending();
 	u16 vector = Interrupts::get_interrupt_vector(interrupt_pending);
 
 	write(m_registers.sp, m_registers.pc & 0xFF);         

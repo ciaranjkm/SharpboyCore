@@ -1390,7 +1390,7 @@ int bCPU::rst_n(u8 vector) {
 
 //misc instructions
 int bCPU::halt() {
-	if (!m_cpu.ime && Interrupts::check_for_interrupt()) {
+	if (!m_cpu.ime && Interrupts::get_new_pending() != interrupt_none) {
 		m_cpu.halted = false;
 		m_cpu.halt_bug = true;
 		return 0;
@@ -1410,7 +1410,6 @@ int bCPU::stop() {
 
 int bCPU::ei() {
 	m_cpu.enable_ime = true;
-	m_cpu.ime = false;
 
 	return ticks_0;
 }

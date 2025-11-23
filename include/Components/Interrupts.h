@@ -15,13 +15,19 @@ public:
 	static void write_ie(u8 value);
 
 	static bool check_for_interrupt();
-	static e_interrupts get_pending_interrupt();
+	static e_interrupts get_new_pending();
+	static e_interrupts get_current_pending();
+
 	static u16 get_interrupt_vector(e_interrupts type);
 
 private:
 	static u8 IF;
 	static u8 IE;
+
+	static e_interrupts currently_pending;
 };
 
 inline u8 Interrupts::IF = 0x00;
 inline u8 Interrupts::IE = 0x00;
+
+inline e_interrupts Interrupts::currently_pending = interrupt_none;
