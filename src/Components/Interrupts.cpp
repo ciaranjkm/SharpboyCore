@@ -9,11 +9,11 @@ void Interrupts::clear_interrupt(e_interrupts type) {
 }
 
 u8 Interrupts::read_if() {
-	return IF & 0x1f;
+	return IF;
 }
 
 void Interrupts::write_if(u8 value) {
-	IF = value;
+	IF = value | 0xe0;
 }
 
 u8 Interrupts::read_ie() {
@@ -21,7 +21,7 @@ u8 Interrupts::read_ie() {
 }
 
 void Interrupts::write_ie(u8 value) {
-	IE = value;
+	IE = value & 0x1f;
 }
 
 bool Interrupts::check_for_interrupt() {
@@ -42,6 +42,10 @@ e_interrupts Interrupts::get_new_pending() {
 	}
 
 	currently_pending = (e_interrupts)bit;
+
+	if (currently_pending == interrupt_serial) {
+		int x = 0;
+	}
 	return currently_pending;
 }
 

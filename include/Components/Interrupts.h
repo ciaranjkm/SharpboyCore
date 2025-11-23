@@ -28,6 +28,6 @@ private:
 };
 
 inline u8 Interrupts::IF = 0x00;
-inline u8 Interrupts::IE = 0x00;
+inline u8 Interrupts::IE = 0xe0;
 
 inline e_interrupts Interrupts::currently_pending = interrupt_none;
