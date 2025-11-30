@@ -1,0 +1,14 @@
+TODO LIST
+
+1. Fix acceptance test fails with sprite fetcher this is probably from timing with oam blocking etc
+2. Reduce stack size 185k bytes arrays of memory etc
+3. Start testing with ppu tests for mooneyes and dmg-acid2
+4. Add some gui debug features and nicer gui
+	- Tile viewer
+	- registers
+	- disassemby
+	- hidable menu
+	- pause / play
+	- more alert ui, toggle buttons if rom is enabled/disabled etc
+5. Add settings file for rom paths and default paths in output dir
+6. Add input and custom keybinds and maybe even joypad input with sdl

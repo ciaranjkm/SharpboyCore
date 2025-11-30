@@ -109,21 +109,6 @@ void PPU::dma_tick() {
 	}
 }
 
-void PPU::draw_scanline() {
-	for (int x = 0; x < 160; x++) {
-		//get tile num
-
-
-
-		//get tile low
-
-		//get tile high
-
-		//add pixels to buffer
-
-	}
-}
-
 u8 PPU::read(u16 address) const {
 	if (address >= 0x8000 && address < 0xa000) {
 		if ((m_ppu.current_mode == ppu_vblank) || (m_ppu.current_mode == ppu_hblank)) {

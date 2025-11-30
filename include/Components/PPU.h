@@ -145,8 +145,6 @@ public:
 	void dma_tick();
 
 	//DRAWING
-	void draw_scanline();
-
 	bool get_frame_ready();
 	void reset_frame_ready();
 	
