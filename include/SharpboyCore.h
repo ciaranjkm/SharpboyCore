@@ -85,6 +85,7 @@ public:
 	//DISPLAY
 	void reset_frame_ready();
 	bool get_frame_ready();
+	std::array<u32, 160 * 144>* get_frame_buffer();
 
 	//AUDIO
 	void reset_audio_buffer_ready();

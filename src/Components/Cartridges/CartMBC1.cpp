@@ -5,18 +5,12 @@ CartMBC1::CartMBC1(e_cart_types type) {
 }
 
 bool CartMBC1::load_rom(const std::vector<u8>& rom) {
-	u8 rom_size = rom[0x148];
-	u8 ram_size = rom[0x149];
+	u8 rom_size_byte = rom[0x148];
+	u8 ram_size_byte = rom[0x149];
 
-	set_rom_ram_sizes(rom_size, ram_size);
-	m_rom.resize(m_rom_size);
-	m_ram.resize(m_ram_size);
+	set_rom_ram_sizes(rom_size_byte, ram_size_byte);
 
-	if (rom.size() < m_rom_size) {
-		return false;
-	}
-
-	for (int i = 0; i < m_rom_size; i++) {
+	for (int i = 0; i < rom_size; i++) {
 		m_rom[i] = rom[i];
 	}
 
@@ -48,73 +42,78 @@ void CartMBC1::swap_boot_rom_buffer() {
 }
 
 u8 CartMBC1::read(u16 address) const {
-	//ROM READS
 	if (address < 0x4000) {
-		if (m_simple_addressing_mode) {
+		if (m_mode_register == 0x00) {
 			return m_rom[address];
 		}
 		else {
-			//TODO ROM BANK 0 BANKING, NOT ENABLED ON SMALL ROMS SO JUST LEAVE FOR NOW
+			u32 target_bank = (m_ram_bank_register << 5);
+			u32 target_address = (target_bank << 14) | (address);
+			target_address %= rom_size;
+
+			return m_rom[target_address];
 		}
 	}
 	else if (address < 0x8000) {
-		u16 target_address = (u16)(((0x4000 * m_rom_bank_number) + (address - 0x4000)) % m_rom_size);
-		return m_rom[target_address];
-	}
+		u32 target = ((m_rom_bank_register * 0x4000) + (address - 0x4000)) % rom_size;
 
-	//RAM READS
-	else if (address >= 0xa000 && address < 0xc000) {
-		if (!m_local_ram_enabled) {
+		return m_rom[target];
+	}
+	else if (address >= 0xa000 && address < 0xc000)
+	{
+		if (!m_ram_enabled || !m_ram_global_enable) {
 			return 0xff;
 		}
-
-		u16 target_address = ((0x2000 * m_ram_bank_number) + (address - 0x2000)) % m_ram_size;
-		return m_ram[target_address];
 	}
-
-	return 0xff;
 }
 
 void CartMBC1::write(u16 address, u8 value) {
-	if (address == 0xFF50) {
+	//BANK REGISTER FOR THE BOOT ROM
+	if (address == 0xff50) {
 		m_bank_register = value;
 		if (value == 0x01 && m_cartridge.boot_rom) {
 			m_cartridge.boot_rom = false;
 			swap_boot_rom_buffer();
+			return;
+		}
+	}
+	else if (address < 0x2000) {
+		// RAM Enable
+		m_ram_enable_register = value;
+		m_ram_enabled = (value & 0x0F) == 0x0A;
+		return;
+	}
+	else if (address < 0x4000) {
+		// ROM Bank Number - lower 5 bits
+		m_rom_bank_register = value & 0x1F;
+		if ((m_rom_bank_register % 0x10) == 0x00) {
+			m_rom_bank_register++;
 		}
 		return;
 	}
-
-	if (address < 0x2000) {
-		//CAN RAM BE ACCESSED, NOT IS RAM ENABLED FOR THIS CART
-		m_local_ram_enabled = (value & 0x0f) == 0x0a;
-	}
-	else if (address < 0x4000) {
-		//WRTITES TO ROM BANK REGISTERS, 0x00 BECOMES 0x01
-		u8 bank = (value == 0x00) ? 1 : value;
-		m_rom_bank_number = (bank & 0x60) | (value & 0x1f);
-	}
 	else if (address < 0x6000) {
-		//WRITE TO RAM BANK REGISTER OR IN LARGE ROM MODE, WRITES TO BIT 5/6 OF ROM BANK REGISTER
-		if (!m_large_rom_mode) {
-			m_ram_bank_number = value & 0x03;
-		}
-		else {
-			m_rom_bank_number = (m_rom_bank_number & 0x1f) | ((value & 0x03) << 5);
-		}
+		// RAM Bank Number / Upper ROM Bank bits
+		m_ram_bank_register = value & 0x03;
+		return;
 	}
 	else if (address < 0x8000) {
-		//WRITE TO TOGGLE ADDRESSING MODE, THIS HAS NO EFFECT IF RAM <= 8KB and ROM <= 512KB (NOT LARGE ROM MODE)
-		if (!(m_rom_size >= 0x80000 && m_ram_size >= 0x2000)) {
+		// Banking Mode Select
+		m_mode_register = value & 0x01;
+		return;
+	}
+	else if (address >= 0xA000 && address < 0xC000) {
+		// External RAM Write
+		if (!m_ram_enabled || !m_ram_global_enable) {
 			return;
 		}
 
-		if ((value & 0x01) != 0x00) {
-			m_simple_addressing_mode = false;
-		}
-		else {
-			m_simple_addressing_mode = true;
-		}
+		u8 ram_bank = (m_mode_register == 0x01) ? m_ram_bank_register : 0x00;
+		ram_bank &= (number_of_ram_banks - 1);
+
+		int offset = ram_bank * 0x2000;
+		u16 target_address = address - 0xA000;
+		m_ram[offset + target_address] = value;
+		return;
 	}
 }
 
@@ -122,77 +121,88 @@ void CartMBC1::write(u16 address, u8 value) {
 void CartMBC1::set_rom_ram_sizes(u8 rom_size, u8 ram_size) {
 	//ROM SIZE FIRST (MAX 2MB)
 	m_large_rom_mode = false;
+	int resize_rom = 0;
 	switch (rom_size) {
 	case rom_32KB:
-		m_rom_size = 0x8000;
+		resize_rom = 0x8000;
 		break;
 
 	case rom_64KB:
-		m_rom_size = 0x10000;
+		resize_rom = 0x10000;
 		break;
 
 	case rom_128KB:
-		m_rom_size = 0x20000;
+		resize_rom = 0x20000;
 		break;
 
 	case rom_256KB:
-		m_rom_size = 0x40000;
+		resize_rom = 0x40000;
 		break;
 
 	case rom_512KB:
-		m_rom_size = 0x80000;
+		resize_rom = 0x80000;
 		break;
 
 	case rom_1MB:
-		m_rom_size = 0x100000;
+		resize_rom = 0x100000;
 		m_large_rom_mode = true;
 		break;
 
 	case rom_2MB:
-		m_rom_size = 0x200000;
+		resize_rom = 0x200000;
 		m_large_rom_mode = true;
 		break;
 
 	default:
-		m_rom_size = 0x8000;
-		m_rom_size_type = rom_32KB;
+		resize_rom = 0x8000;
+		m_rom_size = rom_32KB;
 		break;
 	}
-	m_rom_size_type = (e_rom_size)rom_size;
+	m_rom_size = (e_rom_size)rom_size;
 
 	//RAM SIZE NEXT (MAX 32KB)
+	int resize_ram = 0;
 	switch (ram_size) {
 	case ram_none:
 		m_ram_enabled = false;
-		m_ram_size = 0x00;
+		resize_ram = 0x00;
 		break;
 
 	case ram_unused:
 		m_ram_enabled = false;
-		m_ram_size = 0x00;
+		resize_ram = 0x00;
 		break;
 
 	case ram_8KB:
 		m_ram_enabled = true;
-		m_ram_size = 0x2000;
+		resize_ram = 0x2000;
 		break;
 
 	case ram_32KB:
 		m_ram_enabled = true;
 		if (m_large_rom_mode) {
-			m_ram_size = 0x2000;
-			m_ram_size_type = ram_8KB;
+			resize_ram = 0x2000;
+			m_ram_size = ram_8KB;
 		}
 		else {
-			m_ram_size = 0x8000;
+			resize_ram = 0x8000;
 		}
 		break;
 
 	default:
 		m_ram_enabled = false;
-		m_ram_size = 0x00;
-		m_ram_size_type = ram_invalid;
+		resize_ram = 0;
+		m_ram_size = ram_invalid;
 		break;
 	}
-	m_ram_size_type = (e_ram_size)ram_size;
+	m_ram_size = (e_ram_size)ram_size;
+
+	m_rom.resize(resize_rom);
+	m_ram.resize(resize_ram);
+
+	number_of_rom_banks = resize_rom / 0x4000;
+	number_of_ram_banks = resize_ram / 0x2000;
+
+	this->rom_size = resize_rom;
+	this->ram_size = resize_ram;
 }

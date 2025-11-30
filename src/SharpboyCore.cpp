@@ -29,6 +29,18 @@ void SharpboyCore::output_current_error() {
 	m_current_error.output();
 }
 
+std::array<u32, 160 * 144>* SharpboyCore::get_frame_buffer() {
+	return m_components.get_ppu_frame_buffer();
+}
+
+bool SharpboyCore::get_frame_ready() {
+	return m_components.is_ppu_frame_ready();
+}
+
+void SharpboyCore::reset_frame_ready() {
+	m_components.ppu_reset_frame_ready();
+}
+
 bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, bool using_boot_rom) {
 	//CHECK FOR ALREADY EXISTING INSTANCE
 	if (!m_core_context.emu_ready) {
@@ -44,7 +56,7 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 		return false;
 	}
 	if (m_core_context.using_boot_rom) {
-		if (!FileReader::read_rom_file(boot_rom, "BOOT.bin", true)) {
+		if (!FileReader::read_rom_file(boot_rom, "BOOT.bin", using_boot_rom)) {
 			m_core_context.using_boot_rom = false;
 		}
 	}
@@ -58,9 +70,6 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	//INIT COMPONENTS
 	m_components.initialise_components(using_boot_rom);
 	m_components.load_rom_into_cart(rom, using_boot_rom, boot_rom);
-
-	//START SYNCRONISER TIMER
-	m_syncroniser.start_syncroniser();
 
 	m_core_context.emu_ready = false;
 	m_core_context.emu_active = true;

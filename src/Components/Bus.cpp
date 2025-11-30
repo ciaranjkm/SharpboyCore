@@ -51,8 +51,6 @@ bool Bus::update_timer_ptr(Timer* timer) {
 
 //MEMORY ACCESS AND REDIRECTION
 u8 Bus::cpu_read(u16 address) {
-	//ALLOW READS AND BLOCK OAM AND HRAM WHEN DMA IS ACTIVE, THIS WORKS FOR MOST STUFF WITHOUT DOING THE PROPER BUS CONFLICT
-	//TODO OPEN BUS IMPLEMENTATION DMA CONFLICT OAM WILL WIN AND READ AT DMA ADDRESS
 	if (address >= 0x0000 && address < 0x8000) {
 		return m_cart->read(address);
 	}
@@ -69,10 +67,6 @@ u8 Bus::cpu_read(u16 address) {
 		return m_imu->read((u16)(address - 0x2000));
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		if (is_dma_active) {
-			return 0xff;
-		}
-
 		return m_ppu->read(address);
 	}
 	else if ((address >= 0xff00 && address < 0xff80) || address == 0xffff) {		
@@ -87,7 +81,6 @@ u8 Bus::cpu_read(u16 address) {
 }
 
 void Bus::cpu_write(u16 address, u8 value) {
-	//DONT ALLOW CPU TO WRITE TO THE BUS WHEN DMA IS ACTIVE ONLY TO IE, DMA REGISTER AND HRAM	
 	if (address >= 0x0000 && address < 0x8000) {
 		m_cart->write(address, value);
 		return;
@@ -108,10 +101,6 @@ void Bus::cpu_write(u16 address, u8 value) {
 		return;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		if (is_dma_active) {
-			return;
-		}
-
 		m_ppu->write(address, value);
 		return;
 	}
@@ -254,13 +243,4 @@ void Bus::write_io(u16 address, u8 value) {
 	else if (address == io_bank) {
 		m_cart->write(address, value);
 	}
-}
-
-//DMA
-void Bus::dma_active() {
-	is_dma_active = true;
-}
-
-void Bus::dma_inactive() {
-	is_dma_active = false;
 }

@@ -5,8 +5,6 @@
 #include "Cartridge.h"
 #include "../../Utilities/Logger.h"
 
-typedef uint32_t u32;
-
 /*
 	In the default configuration supports up to 512KiB of ROM with up to 32KiB of banked RAM.
 	
@@ -33,19 +31,24 @@ private:
 	std::vector<u8> m_ram = std::vector<u8>();
 	std::array<u8, boot_rom_size> m_boot_rom = std::array<u8, boot_rom_size>();
 
-	u8 m_rom_bank_number = 0x01;
-	u8 m_ram_bank_number = 0x00;
-	bool m_simple_addressing_mode = true;
-	bool m_local_ram_enabled = false;
-
 	bool m_large_rom_mode = false;
+	e_rom_size m_rom_size = rom_invalid;
+	e_ram_size m_ram_size = ram_invalid;
+
+	bool m_ram_global_enable = false;
 	bool m_ram_enabled = false;
 
-	int m_rom_size = 0;
-	e_rom_size m_rom_size_type = rom_invalid;
+	u8 m_ram_enable_register = 0x00;
 
-	int m_ram_size = 0;
-	e_ram_size m_ram_size_type = ram_invalid;
+	u8 m_rom_bank_register = 0x01;
+	u8 m_ram_bank_register = 0x00;
+	u8 m_mode_register = 0x00;
+
+	u8 number_of_rom_banks = 0x00;
+	u8 number_of_ram_banks = 0x00;
+
+	int rom_size = 0;
+	int ram_size = 0;
 
 private:
 	//MEMBER FUNCTIONS

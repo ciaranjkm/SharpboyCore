@@ -38,7 +38,7 @@ struct s_simple_timer {
 };
 
 struct s_basic_sync {
-	int overrun_ticks = 0;
+	uint64_t overrun_ticks = 0;
 	std::chrono::time_point<std::chrono::high_resolution_clock> previous_time;
 	std::chrono::time_point<std::chrono::high_resolution_clock> second_start;
 
@@ -49,14 +49,24 @@ struct s_basic_sync {
 	}
 };
 
+struct SyncState {
+	std::chrono::high_resolution_clock::time_point previous_time;
+	std::chrono::high_resolution_clock::time_point start_time;
+	int64_t overrun_ticks;
+	int64_t total_target_ticks;
+	int64_t total_actual_ticks;
+
+	// Statistics for monitoring
+	uint64_t frame_count;
+	double avg_drift_cycles;
+};
+
+
 const uint64_t CPU_CLOCK = 4194304;
 
 class Syncroniser {
 public:
 	~Syncroniser();
-
-	void start_syncroniser();
-	void reset_syncroniser();
 
 	int advance_cycles();
 
@@ -74,6 +84,6 @@ private:
 	int total_ticks = 0;
 
 	//SYNC OPTIONS FOR TIMING (GENERAL TIMING (CYCLES COUNT / VSYNC) OR AUDIO)
-	s_basic_sync m_sync = {};
+	SyncState m_sync = {};
 
 };

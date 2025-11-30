@@ -29,17 +29,10 @@ public:
 
 	u8 read_io(u16 address);
 	void write_io(u16 address, u8 value);
-
-	//DMA
-	void dma_active();
-	void dma_inactive();
-
 private:
 	//COMPONENT POINTERS
 	Cartridge* m_cart = nullptr;
 	IMU* m_imu = nullptr;
 	PPU* m_ppu = nullptr;
 	Timer* m_timer = nullptr;
-
-	bool is_dma_active = false;
 };

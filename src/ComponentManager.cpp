@@ -112,6 +112,18 @@ PPU* ComponentManager::get_ppu() {
 	return &m_ppu;
 }
 
+bool ComponentManager::is_ppu_frame_ready() {
+	return m_ppu.get_frame_ready();
+}
+
+void ComponentManager::ppu_reset_frame_ready() {
+	m_ppu.reset_frame_ready();
+}
+
+std::array<u32, 160 * 144>* ComponentManager::get_ppu_frame_buffer() {
+	return m_ppu.get_frame_buffer();
+}
+
 Timer* ComponentManager::get_timer() {
 	return &m_timer;
 }

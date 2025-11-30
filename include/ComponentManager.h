@@ -39,6 +39,11 @@ public:
 	Bus* get_bus();
 	IMU* get_imu();
 	PPU* get_ppu();
+
+	bool is_ppu_frame_ready();
+	void ppu_reset_frame_ready();
+	std::array<u32, 160 * 144>* get_ppu_frame_buffer();
+
 	Timer* get_timer();
 	Cartridge* get_base_cart();
 
