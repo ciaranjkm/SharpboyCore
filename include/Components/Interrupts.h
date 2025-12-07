@@ -13,6 +13,8 @@ public:
 	static void send_interrupt(e_interrupts type);
 	static void clear_interrupt(e_interrupts type);
 
+	static void reset(bool using_boot_rom = false);
+
 	static u8 read_if();
 	static void write_if(u8 value);
 

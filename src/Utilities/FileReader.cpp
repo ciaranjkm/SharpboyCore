@@ -75,7 +75,7 @@ bool FileReader::read_rom_file(std::vector<u8>& file_dest, std::filesystem::path
 //MEMBER FUNCTIONS
 bool FileReader::does_exist(e_path_type path, std::filesystem::path file_name) {
 	std::filesystem::path to_check = get_path(path);
-	to_check /= file_name;
+	to_check = to_check / file_name;
 
 	if (!std::filesystem::exists(to_check)) {
 		return false;

@@ -44,16 +44,6 @@ int CPU::step() {
 	}
 
 	u8 op = read_pc();
-
-	//DEBUG OUT FOR MOONEYE TEST ROMS PASS/ FAIL 
-	//3 5 8 pass
-	//42 42 42 fail
-	if (op == inst_LD_B_B) {
-		std::cout << std::format("B:{:#x} C:{:#x} D:{:#x} E:{:#x} H:{:#x} L:{:#x}\n",
-			m_registers.b, m_registers.c, m_registers.d, m_registers.e, m_registers.h, m_registers.l);
-		return 0;
-	}
-
 	check_halt_bug();
 
 	cycles += execute_opcode(op);
@@ -64,37 +54,22 @@ int CPU::step() {
 }
 
 u8 CPU::read(u16 address) { 
-	//idk why this works but it does it is probably not what actually happens
-	
-	//T1 ADDRESS ON BUS 
-	//T2 INTERNAL OPERATION
-	//T3 READ DATA IS AVAILABLE
-	//T4 INTERNAL OPERATION
-
-	tick_components(3);			
+	tick_components(2);			
 	u8 value = m_bus->cpu_read(address);	
-	tick_components(1);					
+	tick_components(2);					
 	return value;
 }
 
 void CPU::write(u16 address, u8 value) {
-	//idk why this works but it does it is probably not what actually happens
-
-	//T1 ADDRESS ON BUS
-	//T2 INTERNAL OPERATION
-	//T3 WRITE HAPPENS
-	//T4 INTERNAL OPERATION
-
-	tick_components(3);		
+	tick_components(2);		
 	m_bus->cpu_write(address, value);	
-	tick_components(1);					
+	tick_components(2);					
 }
 
 u8 CPU::read_pc(bool read_interrupt) {
-	Interrupts::get_new_pending();
-	u8 value = read(m_registers.pc);
-	m_registers.pc++;
-	
+	tick_components(2);
+	u8 value = m_bus->cpu_read(m_registers.pc++);
+	tick_components(2);
 	return value;
 }
 

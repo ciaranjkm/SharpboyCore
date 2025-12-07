@@ -35,11 +35,19 @@ public:
 	void reset_components();
 
 	//GETTERS
-	CPU* get_cpu();
-	Bus* get_bus();
-	IMU* get_imu();
-	PPU* get_ppu();
 
+	//CPU
+	CPU* get_cpu();
+	s_registers* get_cpu_regs();
+
+	//BUS
+	Bus* get_bus();
+	
+	//IMU
+	IMU* get_imu();
+
+	//PPU | FRAME + FRAME READY GET RESET, VRAM FOR DEBUGGER
+	PPU* get_ppu();
 	bool is_ppu_frame_ready();
 	void ppu_reset_frame_ready();
 	std::array<u32, 160 * 144>* get_ppu_frame_buffer();

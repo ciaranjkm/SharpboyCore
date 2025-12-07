@@ -80,17 +80,17 @@ void Syncroniser::attach_components(ComponentManager* comp_manager) {
 void Syncroniser::real_ticks(int ticks) {
 	for (int i = 0; i < ticks; i++) {
 		//advance other components
+        m_timer->tick();
 		m_ppu->dma_tick();
 		m_ppu->tick();
-		m_timer->tick();
 	}
 }
 
 void Syncroniser::real_cycle() {
 	for (int i = 0; i < 4; i++) {
 		//advance other components 1 m cycle
+        m_timer->tick();
 		m_ppu->dma_tick();
 		m_ppu->tick();
-		m_timer->tick();
 	}
 }

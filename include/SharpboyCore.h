@@ -38,12 +38,12 @@ struct s_core_error {
 		current_error = e;
 	}
 
-	std::string get_error() const {
+	std::string get_msg() const {
 		return current_error;
 	}
 
-	void output() {
-		Logger::log(log_error, current_error);
+	e_error_type get_type() const {
+		return type;
 	}
 };
 
@@ -97,10 +97,7 @@ public:
 	USES THE SST PATH IN FILEREADER STATIC OBJECT, MAKE SURE IT IS UPDATED BEFORE RUNNING OR ALL FAILS
 	*/
 	void run_ssts(bool show_all_results, bool prefixed);
-
-	std::string get_error() const;
-	void output_current_error();
-
+	s_core_error get_error();
 	s_core_context* get_core_context();
 
 private:

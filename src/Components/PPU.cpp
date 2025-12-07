@@ -1,10 +1,18 @@
 #include <Components/PPU.h>
 #include <Components/Bus.h>
 
+//CONSTRUCTOR DESTRUCTOR
 PPU::PPU() {
-	m_vram.resize(VRAM_SIZE);
+	m_draw_data = std::make_unique<s_draw_data>();
+	m_memory = std::make_unique<s_ppu_memory>();
 }
 
+PPU::~PPU() {
+	m_draw_data.reset();
+	m_memory.reset();
+}
+
+//INITIALISTION
 bool PPU::set_bus_ptr(Bus* bus) {
 	m_bus = bus;
 
@@ -16,27 +24,29 @@ bool PPU::set_bus_ptr(Bus* bus) {
 }
 
 void PPU::reset(bool using_boot_rom) {
-	//todo using boot rom init values
-	m_vram.clear();
-	m_vram.resize(VRAM_SIZE);
+	if (!using_boot_rom) {
+		m_ppu_io = {};
+		m_ppu_io.lcdc = 0x91;
+		m_ppu_io.stat = 0x85;
+		m_ppu_io.bgp = 0xfc;
+		m_ppu_io.obp0 = 0xff;
+		m_ppu_io.obp1 = 0xff;
+	}
+	else {
+		m_ppu_io = {};
+	}
 
-	m_oam.fill(0x00);
+	m_memory->vram.fill(0x00);
+	m_memory->oam.fill(0x00);
 
-	m_ppu_io = {};
+	m_draw_data.reset();
+	m_draw_data = std::make_unique<s_draw_data>();
+
+	m_dma = {};
+	m_fifo = {};
 }
 
-bool PPU::get_frame_ready() {
-	return m_ppu.is_frame_ready;
-}
-
-void PPU::reset_frame_ready() {
-	m_ppu.is_frame_ready = false;
-}
-
-std::array<u32, FRAME_BUFFER_SIZE>* PPU::get_frame_buffer() {
-	return &m_completed_frame;
-}
-
+//EXECUTION
 void PPU::tick() {
 	m_ppu.ticks++;
 
@@ -61,8 +71,6 @@ void PPU::tick() {
 		//THIS SHOULD NOT HAPPEN
 		break;
 	}
-
-	check_ly_lyc();
 }
 
 void PPU::dma_tick() {
@@ -72,9 +80,10 @@ void PPU::dma_tick() {
 		m_dma.ticks_since_start++;
 
 		//ALLIGN TO CPU CLOCK + 1 M CYCLE
-		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 1) {
+		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 2) {
 			if (!m_dma.active) {
 				m_dma.active = true;
+				m_bus->dma_start();
 			}
 
 			started_new_this_tick = true;
@@ -91,12 +100,13 @@ void PPU::dma_tick() {
 			u8 value = m_bus->unblocked_read(m_dma.dma_address++);
 			int oam_target = m_dma.cycles_this_transfer - 1;
 
-			m_oam[oam_target] = value;
+			m_memory->oam[oam_target] = value;
 		}
 
 		if (m_dma.cycles_this_transfer >= DEFAULT_DMA_CYCLES) {
 			m_dma = {};
 			m_dma.active = false;
+			m_bus->dma_end();
 		}
 	}
 
@@ -109,13 +119,25 @@ void PPU::dma_tick() {
 	}
 }
 
+//DRAW DATA GET AND RESET
+bool PPU::get_frame_ready() const  {
+	return m_ppu.is_frame_ready;
+}
+
+void PPU::reset_frame_ready() {
+	m_ppu.is_frame_ready = false;
+}
+
+std::array<u32, FRAME_BUFFER_SIZE>* PPU::get_frame_buffer() {
+	return &m_draw_data->completed_frame;
+}
+
+//GET VRAM HERE
+
+//MEMORY ACCESS
 u8 PPU::read(u16 address) const {
 	if (address >= 0x8000 && address < 0xa000) {
-		if ((m_ppu.current_mode == ppu_vblank) || (m_ppu.current_mode == ppu_hblank)) {
-			return 0xff;
-		}
-
-		return m_vram[u16(address - 0x8000)];
+		return m_memory->vram[u16(address - 0x8000)];
 
 		/*
 		//only allow reads during hblank and vblank
@@ -132,7 +154,7 @@ u8 PPU::read(u16 address) const {
 			return 0xff;
 		}
 
-		return m_oam[u16(address - 0xfe00)];
+		return m_memory->oam[u16(address - 0xfe00)];
 
 		/*
 		if ((m_ppu.current_mode == ppu_oam) || (m_ppu.current_mode == ppu_draw) || (m_dma.active)){
@@ -149,7 +171,7 @@ u8 PPU::read(u16 address) const {
 
 void PPU::write(u16 address, u8 value) {
 	if (address >= 0x8000 && address < 0xa000) {
-		m_vram[(u16)(address - 0x8000)] = value;
+		m_memory->vram[(u16)(address - 0x8000)] = value;
 
 		/*
 		if (m_ppu.current_mode == ppu_draw) {
@@ -166,7 +188,7 @@ void PPU::write(u16 address, u8 value) {
 			return;
 		}
 
-		m_oam[(u16)(address - 0xfe00)] = value;
+		m_memory->oam[(u16)(address - 0xfe00)] = value;
 
 		/*
 		if ((m_ppu.current_mode == ppu_oam) || (m_ppu.current_mode == ppu_draw) || (m_dma.active)) {
@@ -270,6 +292,10 @@ u8 PPU::bus_read(u16 address) {
 
 //PPU MODE TICKS
 void PPU::oam_tick() {
+	if (m_ppu.ticks == 4) {
+		check_ly_lyc();
+	}
+
 	//do nothing for now just wait for mode change
 	if (m_ppu.ticks == OAM_DURATION) {
 		m_ppu.ticks -= OAM_DURATION;
@@ -277,6 +303,7 @@ void PPU::oam_tick() {
 
 		//clear + reset fifo for the next line
 		m_fifo.dummy_fetch = true;
+		m_fifo.discard_fetch = true;
 		m_fifo.start_of_scanline = true;
 		m_fifo.screen_x = 0;
 		m_fifo.fetcher_x = 0;
@@ -291,10 +318,9 @@ void PPU::draw_tick() {
 	tick_bg_fetcher();
 	output_pixels();
 
-	//THIS WILL BE CHANGED TO A FLAG THAT THE FIFO IS DONE, SO VARIABLE CYCLE LENGTH
 	if (m_fifo.screen_x >= 160) {
-		m_ppu.ticks = 0;
 		m_ppu.ticks_in_hblank = SCANLINE_LENGTH - (m_ppu.ticks + OAM_DURATION);
+		m_ppu.ticks = 0;
 
 		m_ppu.current_mode = ppu_hblank;
 	}
@@ -310,16 +336,25 @@ void PPU::hblank_tick() {
 		}
 		
 		m_ppu.current_mode = (++m_ppu_io.ly >= DISPLAY_HEIGHT) ? ppu_vblank : ppu_oam;
+		m_ppu.send_vblank = true;
+		m_ppu.ticks_until_vblank = 4;
 
 		if (m_ppu.current_mode == ppu_vblank) {
 			m_ppu.is_frame_ready = true;
-			m_completed_frame = m_frame;
-			Interrupts::send_interrupt(interrupt_vblank);
+			m_draw_data->completed_frame = m_draw_data->frame;
 		}
 	}
 }
 
 void PPU::vblank_tick() {
+	if (m_ppu.send_vblank) {
+		m_ppu.ticks_until_vblank--;
+		if (m_ppu.ticks_until_vblank == 0) {
+			Interrupts::send_interrupt(interrupt_vblank);
+			m_ppu.send_vblank = false;
+		}
+	}
+	
 	if (m_ppu.ticks == SCANLINE_LENGTH) {
 		m_ppu.current_mode = (++m_ppu_io.ly >= DISPLAY_HEIGHT + 10) ? ppu_oam : ppu_vblank;
 		m_ppu.ticks = 0;
@@ -346,51 +381,47 @@ void PPU::latch_start_line_values() {
 	m_ppu.current_scy = m_ppu_io.scy;
 }
 
-//FIFO
+//FIFO BG/SPRITE
 void PPU::tick_bg_fetcher() {
 	m_fifo.ticks++;
 
+	if (m_fifo.ticks < 2) {
+		return;
+	}
+
 	switch (m_fifo.background.current_state) {
 	case fifo_fetch_tile_number:
-		if (m_fifo.ticks == 1) {
-			fetcher_number();
-		}
-		else {
-			m_fifo.background.current_state = fifo_fetch_low;
-			m_fifo.ticks = 0;
-		}
+		fetcher_number();
+		m_fifo.background.current_state = fifo_fetch_low;
+		m_fifo.ticks = 0;
 
 		break;
 
 	case fifo_fetch_low:
-		if (m_fifo.ticks == 1) {
-			fetcher_low();
-		}
-		else {
-			m_fifo.background.current_state = fifo_fetch_high;
-			m_fifo.ticks = 0;
-		}
+		fetcher_low();
+		m_fifo.background.current_state = fifo_fetch_high;
+		m_fifo.ticks = 0;
+
 		break;
 
 	case fifo_fetch_high:
-		if (m_fifo.ticks == 1) {
-			fetcher_high();
+		fetcher_high();
+		m_fifo.background.current_state = fifo_pushing;
+		m_fifo.ticks = 0;
+
+		if (m_fifo.dummy_fetch) {
+			m_fifo.dummy_fetch = false;
+			m_fifo.background.current_state = fifo_fetch_tile_number;
 		}
-		else {
-			m_fifo.background.current_state = fifo_pushing;
-			m_fifo.ticks = 0;
-		}
+			
 		break;
 
 	case fifo_pushing:
-		if (m_fifo.ticks == 1) {
-			break;
-		}
-		else {
-			fetcher_push();
-			m_fifo.background.current_state = fifo_fetch_tile_number;
-			m_fifo.ticks = 0;
-		}
+		fetcher_push();
+
+		m_fifo.background.current_state = fifo_fetch_tile_number;
+		m_fifo.ticks = 0;
+			
 		break;
 
 	default:
@@ -407,7 +438,7 @@ void PPU::fetcher_number() {
 	tile_map_base += ((m_ppu.current_scx / 8) + m_fifo.fetcher_x) & 0x1f;
 	tile_map_base += 32 * (((m_ppu.current_ly + m_ppu.current_scy) & 0xff) / 8);
 
-	m_fifo.background.tile_index = m_vram[u16(tile_map_base - 0x8000)];
+	m_fifo.background.tile_index = m_memory->vram[u16(tile_map_base - 0x8000)];
 
 	u16 tile_data_address = 0x9000;
 	if ((m_ppu_io.lcdc & 0x10) != 0) {
@@ -424,11 +455,11 @@ void PPU::fetcher_number() {
 }
 
 void PPU::fetcher_low() {
-	m_fifo.background.tile_low = m_vram[u16(m_fifo.background.tile_address - 0x8000)];
+	m_fifo.background.tile_low = m_memory->vram[u16(m_fifo.background.tile_address - 0x8000)];
 }
 
 void PPU::fetcher_high() {
-	m_fifo.background.tile_high = m_vram[u16((m_fifo.background.tile_address + 1) - 0x8000)];
+	m_fifo.background.tile_high = m_memory->vram[u16((m_fifo.background.tile_address + 1) - 0x8000)];
 }
 
 void PPU::fetcher_push() {
@@ -450,8 +481,7 @@ void PPU::fetcher_push() {
 			}
 		}
 
-		if (m_fifo.dummy_fetch) {
-			m_fifo.dummy_fetch = false;
+		if (m_fifo.discard_fetch) {
 			return;
 		}
 
@@ -485,6 +515,12 @@ void PPU::output_pixels() {
 	int shift = pixel_to_output.colour * 2;
 	int p_colour = (pixel_to_output.palette >> shift) & 0x03;
 
-	m_frame[m_ppu.current_ly * 160 + m_fifo.screen_x] = sb_colours[p_colour];
+	m_draw_data->frame[m_ppu.current_ly * 160 + m_fifo.screen_x] = sb_colours[p_colour];
 	m_fifo.screen_x++;
+
+	//hacky
+	if (m_fifo.screen_x == 8 && m_fifo.discard_fetch) {
+		m_fifo.discard_fetch = false;
+		m_fifo.screen_x = 0;
+	}
 }

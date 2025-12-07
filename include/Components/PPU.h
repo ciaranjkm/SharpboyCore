@@ -7,6 +7,33 @@
 #include <vector>
 #include <queue>
 
+//BASIC CONSTS
+const int VRAM_SIZE = 0x2000;
+const int OAM_SIZE = 0xa0;
+
+const int DISPLAY_WIDTH = 160;
+const int DISPLAY_HEIGHT = 144;
+const int FRAME_BUFFER_SIZE = 160 * 144;
+
+//DMA TIMING
+const int DEFAULT_DMA_DELAY = 4;
+const int DEFAULT_DMA_CYCLES = 160;
+
+//PPU TIMING
+const int SCANLINE_LENGTH = 456;
+const int DOTS_PER_FRAME = 70224;
+const int VBLANK_HEIGHT = 10;
+const int VBLANK_DOT_TIME = DOTS_PER_FRAME - (SCANLINE_LENGTH * VBLANK_HEIGHT);
+
+const int OAM_DURATION = 80;
+
+const std::array<u32, 4> sb_colours = {
+	0xffffffff,
+	0x909090ff,
+	0x505050ff,
+	0x000000ff
+};
+
 enum e_ppu_mode {
 	ppu_idle,
 	ppu_oam,
@@ -86,8 +113,20 @@ struct s_ppu_fifos {
 	int fetcher_x = 0;
 	
 	bool dummy_fetch = false; //one background tile fetch before real fetches
+	bool discard_fetch = false;
+
 	bool start_of_scanline = false;
 	int discard = 0;
+};
+
+struct s_draw_data {
+	std::array<u32, 160 * 144> completed_frame = std::array<u32, 160 * 144>();
+	std::array<u32, 160 * 144> frame = std::array<u32, 160 * 144>();
+};
+
+struct s_ppu_memory {
+	std::array<u8, VRAM_SIZE> vram = std::array<u8, VRAM_SIZE>();
+	std::array<u8, OAM_SIZE> oam = std::array<u8, OAM_SIZE>();
 };
 
 struct s_ppu_context {
@@ -97,44 +136,22 @@ struct s_ppu_context {
 	int ticks = 0;
 	int ticks_in_hblank = 0;
 	e_ppu_mode current_mode = ppu_oam;
+	
+	bool send_vblank = false;
+	int ticks_until_vblank = 4;
 
 	u8 current_ly = 0x00;
 	u8 current_scx = 0x00;
 	u8 current_scy = 0x00;
 };
 
-//BASIC CONSTS
-const int VRAM_SIZE = 0x2000;
-const int OAM_SIZE = 0xa0;
-
-const int DISPLAY_WIDTH = 160;
-const int DISPLAY_HEIGHT = 144;
-const int FRAME_BUFFER_SIZE = 160 * 144;
-
-//DMA TIMING
-const int DEFAULT_DMA_DELAY = 4;
-const int DEFAULT_DMA_CYCLES = 160;
-
-//PPU TIMING
-const int SCANLINE_LENGTH = 456;
-const int DOTS_PER_FRAME = 70224;
-const int VBLANK_HEIGHT = 10;
-const int VBLANK_DOT_TIME = DOTS_PER_FRAME - (SCANLINE_LENGTH * VBLANK_HEIGHT);
-
-const int OAM_DURATION = 80;
-
-const std::array<u32, 4> sb_colours = {
-	0xffffffff,
-	0x909090ff,
-	0x505050ff,
-	0x000000ff
-};
-
 class Bus;
 
 class PPU {
 public:
+	//CONSTRUCTOR DESTRUCTOR
 	PPU();
+	~PPU();
 
 	//INITIALISATION
 	bool set_bus_ptr(Bus* bus);
@@ -144,11 +161,12 @@ public:
 	void tick();
 	void dma_tick();
 
-	//DRAWING
-	bool get_frame_ready();
+	//DRAW DATA GET AND RESET
+	bool get_frame_ready() const;
 	void reset_frame_ready();
 	
 	std::array<u32, FRAME_BUFFER_SIZE>* get_frame_buffer();
+	//std::array<u8, VRAM_SIZE>* get_vram();
 
 	//MEMORY ACCESS
 	u8 read(u16 address) const;
@@ -158,33 +176,21 @@ public:
 	void write_io(u16 address, u8 value);
 
 private:
-	//MEMBER VARIABLES
+	//CONTEXT VARIABLES
 	s_ppu_io m_ppu_io = {};
 	s_dma m_dma = {};
 	s_ppu_context m_ppu = {};
 
+	//FIFO + DRAWING MEMBER VARIABLES
 	s_ppu_fifos m_fifo = {};
 	std::queue<u8> m_fifo_buffer = std::queue<u8>();
-
-	//PTR TO BUS TO READ FOR DMA TRANSFER
-	Bus* m_bus = nullptr;
-
-	//DRAW DATA
-	std::array<u32, FRAME_BUFFER_SIZE> m_completed_frame = std::array<u32, FRAME_BUFFER_SIZE>();
-	std::array<u32, FRAME_BUFFER_SIZE> m_frame = std::array<u32, FRAME_BUFFER_SIZE>();
-
-	//TIMING
-	int m_ppu_ticks = 0;
-
-	//DMA
-	bool is_dma_active = false;
-
-	//FIFO
 	std::queue<s_pixel> background_fifo = std::queue<s_pixel>();
 
-	//MEMORY
-	std::vector<u8> m_vram = std::vector<u8>();
-	std::array<u8, OAM_SIZE> m_oam = std::array<u8, OAM_SIZE>();
+	std::unique_ptr<s_draw_data> m_draw_data = nullptr;
+
+	//MEMORY ACCESS VARIABLES
+	Bus* m_bus = nullptr;
+	std::unique_ptr<s_ppu_memory> m_memory = nullptr;
 
 private:
 	//MEMBER FUNCTIONS
@@ -200,7 +206,8 @@ private:
 	void check_ly_lyc();
 	void latch_start_line_values();
 
-	//FIFO
+	//FIFO BG/SPRITE 
+	//todo modify this to decide what fifo to use and grab a ref to it
 	void tick_bg_fetcher();
 	void fetcher_number();
 	void fetcher_low();

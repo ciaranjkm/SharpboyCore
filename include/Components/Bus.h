@@ -20,6 +20,10 @@ public:
 	bool update_ppu_ptr(PPU* ppu);
 	bool update_timer_ptr(Timer* timer);
 
+	//DMA
+	void dma_start();
+	void dma_end();
+
 	//MEMORY ACCESS AND REDIRECTION
 	u8 cpu_read(u16 address);
 	void cpu_write(u16 address, u8 value);
@@ -35,4 +39,7 @@ private:
 	IMU* m_imu = nullptr;
 	PPU* m_ppu = nullptr;
 	Timer* m_timer = nullptr;
+
+	bool dma_active = false;
+	u8 last_value = 0x00;
 };

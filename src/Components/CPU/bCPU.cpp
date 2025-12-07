@@ -14,6 +14,7 @@ void bCPU::reset(bool using_boot_rom) {
 	}
 
 	m_registers = POST_BOOT_ROM_REGS;
+	m_cpu = {};
 }
 
 s_registers* bCPU::get_registers() {

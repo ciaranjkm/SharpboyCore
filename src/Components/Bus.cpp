@@ -49,34 +49,51 @@ bool Bus::update_timer_ptr(Timer* timer) {
 	return false;
 }
 
+//DMA
+void Bus::dma_start() {
+	dma_active = true;
+}
+
+void Bus::dma_end() {
+	dma_active = false;
+}
+
 //MEMORY ACCESS AND REDIRECTION
 u8 Bus::cpu_read(u16 address) {
 	if (address >= 0x0000 && address < 0x8000) {
-		return m_cart->read(address);
+		last_value = m_cart->read(address);
+		return last_value;
 	}
 	else if (address >= 0x8000 && address < 0xa000) {
-		return m_ppu->read(address);
+		last_value = m_ppu->read(address);
+		return last_value;
 	}
 	else if (address >= 0xa000 && address < 0xc000) {
-		return m_cart->read(address);
+		last_value = m_cart->read(address);
+		return last_value;
 	}
 	else if (address >= 0xc000 && address < 0xe000) {
-		return m_imu->read(address);
+		last_value = m_imu->read(address);
+		return last_value;
 	}
 	else if (address >= 0xe000 && address < 0xfe00) {
-		return m_imu->read((u16)(address - 0x2000));
+		last_value = m_imu->read((u16)(address - 0x2000));
+		return last_value;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		return m_ppu->read(address);
+		last_value = m_ppu->read(address);
+		return last_value;
 	}
 	else if ((address >= 0xff00 && address < 0xff80) || address == 0xffff) {		
-		return read_io(address);
+		last_value = read_io(address);
+		return last_value;
 	}
 	else if (address >= 0xff80 && address < 0xffff) {
-		return m_imu->read(address);
+		last_value = m_imu->read(address);
+		return last_value;
 	}
 	else {
-		return 0xff;
+		return last_value;
 	}
 }
 

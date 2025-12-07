@@ -62,22 +62,14 @@ void IMU::write_io(u16 address, u8 value) {
 	switch (address) {
 	case io_joyp:
 		m_io.joyp = (value | 0x30);
-		return;
+		break;
 
 	case io_sb:
 		m_io.sb = value;
-		return;
+		break;
 
 	case io_sc:
 		m_io.sc = value;
-		if (value & 0x80) {
-			char c = static_cast<char>(m_io.sb);
-			std::cout << c;
-			std::cout.flush();
-
-
-			m_io.sc &= ~0x80;
-		}
 		break;
 
 	default:

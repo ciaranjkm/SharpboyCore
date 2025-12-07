@@ -21,12 +21,8 @@ bool SharpboyCore::is_initialised() const {
 	return m_core_context.initialised;
 }
 
-std::string SharpboyCore::get_error() const {
-	return m_current_error.get_error();
-}
-
-void SharpboyCore::output_current_error() {
-	m_current_error.output();
+s_core_error SharpboyCore::get_error() {
+	return m_current_error;
 }
 
 std::array<u32, 160 * 144>* SharpboyCore::get_frame_buffer() {
@@ -53,10 +49,11 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	std::vector<u8> rom = std::vector<u8>();
 	std::vector<u8> boot_rom = std::vector<u8>();
 	if (!FileReader::read_rom_file(rom, rom_file_name)){
+		m_current_error = { error_initialisation, "Could not read ROM file" };
 		return false;
 	}
 	if (m_core_context.using_boot_rom) {
-		if (!FileReader::read_rom_file(boot_rom, "BOOT.bin", using_boot_rom)) {
+		if (!FileReader::read_rom_file(boot_rom, "BOOT.bin", true)) {
 			m_core_context.using_boot_rom = false;
 		}
 	}
@@ -71,6 +68,8 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	m_components.initialise_components(using_boot_rom);
 	m_components.load_rom_into_cart(rom, using_boot_rom, boot_rom);
 
+	Interrupts::reset(using_boot_rom);
+
 	m_core_context.emu_ready = false;
 	m_core_context.emu_active = true;
 	return true;
@@ -78,6 +77,7 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 
 void SharpboyCore::cleanup_current_instance() {
 	m_components.reset_components();
+	Interrupts::reset();
 
 	m_core_context.emu_active = false;
 	m_core_context.emu_ready = true;

@@ -15,7 +15,7 @@ struct s_imu_io {
 	u8 joyp = 0x00;
 };
 
-const s_imu_io POST_BOOT_ROM_IO = {};
+const s_imu_io POST_BOOT_ROM_IO = {.sb = 0x00, .sc = 0x7e, .joyp = 0xcf};
 
 class IMU {
 public:

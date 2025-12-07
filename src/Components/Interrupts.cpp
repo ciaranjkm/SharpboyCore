@@ -8,12 +8,19 @@ void Interrupts::clear_interrupt(e_interrupts type) {
 	IF &= ~(0x01 << type);
 }
 
+void Interrupts::reset(bool using_boot_rom) {
+	IF = 0xe0;
+	IE = 0x00;
+
+	currently_pending = interrupt_none;
+}
+
 u8 Interrupts::read_if() {
 	return IF;
 }
 
 void Interrupts::write_if(u8 value) {
-	IF = value | 0xe0;
+	IF = (IF & ~0x1f) | (value & 0x1f) | 0xe0;
 }
 
 u8 Interrupts::read_ie() {
