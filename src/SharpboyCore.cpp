@@ -1,41 +1,31 @@
 #include <SharpboyCore.h>
 
+//CONSTRUCTOR / DESTRUCTOR
 SharpboyCore::SharpboyCore() {
 	m_core_context.initialised = false;
 
 	//LINK COMPONENTS
 	if (!m_components.link_components(&m_syncroniser)) {
-		Logger::Log("Failed to link components", LOGGER_LV_ERROR);
+		Logger::Log("Failed to link components", m_core_context.log_level, LOGGER_PR_ERROR);
 		return;
 	}
 
 	m_core_context.initialised = true;
 	m_core_context.emu_ready = true;
 
-	Logger::Log("SharpboyCore instance ready", LOGGER_LV_INFO);
+	Logger::Log("SharpboyCore instance ready", m_core_context.log_level, LOGGER_PR_INFO);
 }
 
 SharpboyCore::~SharpboyCore() {
 	m_components.reset_components();
-	Logger::Log("SharpboyCore instance destroyed", LOGGER_LV_INFO);
+	Logger::Log("SharpboyCore instance destroyed", m_core_context.log_level, LOGGER_PR_INFO);
 }
 
 bool SharpboyCore::is_initialised() const {
 	return m_core_context.initialised;
 }
 
-std::array<u32, 160 * 144>* SharpboyCore::get_frame_buffer() {
-	return m_components.get_ppu_frame_buffer();
-}
-
-bool SharpboyCore::get_frame_ready() {
-	return m_components.is_ppu_frame_ready();
-}
-
-void SharpboyCore::reset_frame_ready() {
-	m_components.ppu_reset_frame_ready();
-}
-
+//INSTANCE STARTUP CLEANUP
 bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, bool using_boot_rom) {
 	//CHECK FOR ALREADY EXISTING INSTANCE
 	if (!m_core_context.emu_ready) {
@@ -50,8 +40,8 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	std::vector<u8> rom = std::vector<u8>();
 	rom.resize(FileReader::get_file_size(rom_path));
 
-	if (!FileReader::read_file_in_bytes(rom, rom_path)){
-		Logger::Log(std::format("Failed to read ROM file : {}", rom_file_name.string()), LOGGER_LV_ERROR);
+	if (!FileReader::read_file_in_bytes(rom, rom_path)) {
+		Logger::Log(std::format("Failed to read ROM file : {}", rom_file_name.string()), m_core_context.log_level, LOGGER_PR_ERROR);
 		return false;
 	}
 
@@ -61,13 +51,13 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	if (m_core_context.using_boot_rom) {
 		if (!FileReader::read_file_in_bytes(boot_rom, m_core_context.boot_rom_file)) {
 			m_core_context.using_boot_rom = false;
-			Logger::Log("Continuing without boot ROM, could not be read or found", LOGGER_LV_WARNING);
+			Logger::Log("Continuing without boot ROM, could not be read or found", m_core_context.log_level, LOGGER_PR_WARNING);
 		}
 	}
 
 	//ASSIGN A CARTRIDGE TYPE FOR THE ROM
 	if (!m_components.assign_cart_type(CART_ROM)) { //todo rom only for testing
-		Logger::Log("Could not create a cartridge object for this ROM!", LOGGER_LV_ERROR);
+		Logger::Log("Could not create a cartridge object for this ROM!", m_core_context.log_level, LOGGER_PR_ERROR);
 		return false;
 	}
 
@@ -79,9 +69,9 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 
 	m_core_context.emu_ready = false;
 	m_core_context.emu_active = true;
-	return true;
 
-	Logger::Log(std::format("SharpboyCore instance loaded {} correctly", rom_file_name.string()), LOGGER_LV_INFO);
+	Logger::Log(std::format("SharpboyCore instance loaded {} correctly", rom_file_name.string()), m_core_context.log_level, LOGGER_PR_INFO);
+	return true;
 }
 
 void SharpboyCore::cleanup_current_instance() {
@@ -91,9 +81,10 @@ void SharpboyCore::cleanup_current_instance() {
 	m_core_context.emu_active = false;
 	m_core_context.emu_ready = true;
 
-	Logger::Log("SharpboyCore instance cleaned up correctly", LOGGER_LV_INFO);
+	Logger::Log("SharpboyCore instance cleaned up correctly", m_core_context.log_level, LOGGER_PR_INFO);
 }
 
+//FILEREADER PATH ADJUSTMENTS
 void SharpboyCore::set_roms_directory(std::filesystem::path directory) {
 	m_core_context.roms_directory = directory;
 }
@@ -110,11 +101,40 @@ std::filesystem::path SharpboyCore::get_boot_rom_file() const {
 	return m_core_context.boot_rom_file;
 }
 
+//LOGGER LEVEL ADJUSTMENTS
+void SharpboyCore::set_logging_level(e_logger_level level) {
+	m_core_context.log_level = level;
+}
+
+e_logger_level SharpboyCore::get_logging_level() const {
+	return m_core_context.log_level;
+}
+
+//EXECUTION
 int SharpboyCore::run() {
 	int cycles_advanced = m_syncroniser.advance_cycles();
 	return cycles_advanced;
 }
 
+//JOYPAD
+void SharpboyCore::set_new_joypad_state(s_joypad_state state) {
+	m_components.set_joypad_state(state);
+}
+
+//DISPLAY
+std::array<u32, 160 * 144>* SharpboyCore::get_frame_buffer() {
+	return m_components.get_ppu_frame_buffer();
+}
+
+bool SharpboyCore::get_frame_ready() {
+	return m_components.is_ppu_frame_ready();
+}
+
+void SharpboyCore::reset_frame_ready() {
+	m_components.ppu_reset_frame_ready();
+}
+
+//DEBUG
 s_core_context* SharpboyCore::get_core_context() {
 	return &m_core_context;
 }

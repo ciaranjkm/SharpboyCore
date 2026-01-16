@@ -8,7 +8,11 @@ bool ComponentManager::link_components(Syncroniser* syncroniser) {
 	}
 
 	//LINK OTHER COMPS TO THE BUS 
-	if (!m_bus.update_imu_ptr(&m_imu) || !m_bus.update_ppu_ptr(&m_ppu) || !m_bus.update_timer_ptr(&m_timer)) {
+	if (!m_bus.update_imu_ptr(&m_imu) || 
+		!m_bus.update_ppu_ptr(&m_ppu) || 
+		!m_bus.update_timer_ptr(&m_timer) || 
+		!m_bus.update_joypad_ptr(&m_joypad)) {
+
 		return false;
 	}
 
@@ -27,6 +31,7 @@ void ComponentManager::initialise_components(bool using_boot_rom) {
 	m_imu.reset(using_boot_rom);
 	m_ppu.reset(using_boot_rom);
 	m_timer.reset(using_boot_rom);
+	m_joypad.reset();
 }
 
 bool ComponentManager::assign_cart_type(e_cart_types cart_type) {
@@ -90,6 +95,7 @@ void ComponentManager::reset_components() {
 	m_imu.reset();
 	m_ppu.reset();
 	m_timer.reset();
+	m_joypad.reset();
 
 	m_cartridge.reset();
 	m_cartridge = nullptr;
@@ -138,4 +144,10 @@ Timer* ComponentManager::get_timer() {
 
 Cartridge* ComponentManager::get_base_cart() {
 	return m_cartridge.get();
+}
+
+//EXTRA GETTERS AND SETTERS
+
+void ComponentManager::set_joypad_state(s_joypad_state state) {
+	m_joypad.set_joypad_state(state);
 }

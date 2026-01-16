@@ -12,21 +12,6 @@
 #include "Sync.h"
 #include "ComponentManager.h"
 
-struct s_core_context {
-	bool initialised = false;
-
-	bool emu_ready = false;
-	bool emu_active = false;
-	bool using_boot_rom = false;
-
-	std::filesystem::path roms_directory = "";
-	std::filesystem::path boot_rom_file = "";
-};
-
-struct s_core_sst_context {
-	std::atomic_bool sst_active = false;
-};
-
 /*
 	This is the main class used to create an emulator instance everything is handled for you here in the public api.
 
@@ -38,6 +23,19 @@ struct s_core_sst_context {
 		TODO
 		TODO
 */
+
+struct s_core_context {
+	bool initialised = false;
+
+	bool emu_ready = false;
+	bool emu_active = false;
+	bool using_boot_rom = false;
+
+	std::filesystem::path roms_directory = "";
+	std::filesystem::path boot_rom_file = "";
+
+	e_logger_level log_level = LOGGER_LEVEL_BASIC;
+};
 
 class SharpboyCore {
 public:
@@ -51,18 +49,22 @@ public:
 	bool initialise_new_instance(std::filesystem::path rom_file_name, bool using_boot_rom = false);
 	void cleanup_current_instance();
 
+	//FILEREADER PATH ADJUSTMENTS
 	void set_roms_directory(std::filesystem::path roms_directory);
 	std::filesystem::path get_roms_directory() const;
 
 	void set_boot_rom_file(std::filesystem::path path);
 	std::filesystem::path get_boot_rom_file() const;
 
-	//RUN TO BE CALLED IN THE MAIN LOOP
+	//LOGGER LEVEL ADJUSTMENTS
+	void set_logging_level(e_logger_level level);
+	e_logger_level get_logging_level() const;
+
+	//EXECUTION
 	int run();
 
 	//JOYPAD
 	void set_new_joypad_state(s_joypad_state state);
-	s_joypad_state* get_joypad_state();
 
 	//DISPLAY
 	void reset_frame_ready();
@@ -80,6 +82,7 @@ public:
 private:
 	//CONTEXTS
 	s_core_context m_core_context;
+	s_joypad_state m_current_joypad_state;
 
 	//COMPONENTS
 	ComponentManager m_components;

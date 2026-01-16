@@ -44,9 +44,6 @@ void IMU::write(u16 address, u8 value) {
 
 u8 IMU::read_io(u16 address) {
 	switch (address) {
-	case io_joyp:
-		return 0xff;
-
 	case io_sb:
 		return m_io.sb;
 
@@ -60,10 +57,6 @@ u8 IMU::read_io(u16 address) {
 
 void IMU::write_io(u16 address, u8 value) {
 	switch (address) {
-	case io_joyp:
-		m_io.joyp = (value | 0x30);
-		break;
-
 	case io_sb:
 		m_io.sb = value;
 		break;
@@ -76,9 +69,4 @@ void IMU::write_io(u16 address, u8 value) {
 		return;
 	}
 
-}
-
-//UPDATE JOYPAD STATE
-void IMU::update_joypad(s_joypad_state new_joypad_state) {
-	m_joypad_state = new_joypad_state;
 }

@@ -19,10 +19,7 @@ public:
 	bool update_imu_ptr(IMU* imu);
 	bool update_ppu_ptr(PPU* ppu);
 	bool update_timer_ptr(Timer* timer);
-
-	//DMA
-	void dma_start();
-	void dma_end();
+	bool update_joypad_ptr(Joypad* joypad);
 
 	//MEMORY ACCESS AND REDIRECTION
 	u8 cpu_read(u16 address);
@@ -39,8 +36,8 @@ private:
 	IMU* m_imu = nullptr;
 	PPU* m_ppu = nullptr;
 	Timer* m_timer = nullptr;
+	Joypad* m_joypad = nullptr;
 
-	bool dma_active = false;
-	u8 dma_previous_value = 0x00;
-	u8 last_value = 0x00;
+	//MEMBER VARIABLES
+	u8 m_last_value = 0x00;
 };

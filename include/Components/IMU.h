@@ -12,10 +12,9 @@ const int HRAM_SIZE = 0x7f;
 struct s_imu_io {
 	u8 sb = 0x00;
 	u8 sc = 0x00;
-	u8 joyp = 0x00;
 };
 
-const s_imu_io POST_BOOT_ROM_IO = {.sb = 0x00, .sc = 0x7e, .joyp = 0xcf};
+const s_imu_io POST_BOOT_ROM_IO = {.sb = 0x00, .sc = 0x7e};
 
 class IMU {
 public:

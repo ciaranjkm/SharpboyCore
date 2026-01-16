@@ -90,7 +90,6 @@ void PPU::dma_tick() {
 		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 1) {
 			if (!m_dma.active) {
 				m_dma.active = true;
-				m_bus->dma_start();
 			}
 
 			started_new_this_tick = true;
@@ -113,7 +112,6 @@ void PPU::dma_tick() {
 		if (m_dma.cycles_this_transfer >= DEFAULT_DMA_CYCLES) {
 			m_dma = {};
 			m_dma.active = false;
-			m_bus->dma_end();
 		}
 	}
 
@@ -149,6 +147,10 @@ u8 PPU::read(u16 address) const {
 		return m_memory->vram[u16(address - 0x8000)];
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
+		if (m_dma.active) {
+			return 0xff;
+		}
+
 		return m_memory->oam[u16(address - 0xfe00)];
 	}
 	
@@ -160,6 +162,10 @@ void PPU::write(u16 address, u8 value) {
 		m_memory->vram[u16(address - 0x8000)] = value;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
+		if (m_dma.active) {
+			return;
+		}
+
 		m_memory->oam[u16(address - 0xfe00)] = value;
 	}
 }
@@ -212,7 +218,7 @@ void PPU::write_io(u16 address, u8 value) {
 		return;
 	case io_lyc:
 		m_ppu_io.lyc = value;
-		//check_ly_lyc();
+		check_ly_lyc();
 		return;
 	case io_bgp:
 		m_ppu_io.bgp = value;
@@ -428,10 +434,9 @@ void PPU::tick_bg_fetcher() {
 }
 
 void PPU::fetcher_number() {
-	u16 tile_map_base = 0x9c00;
+	u16 tile_map_base = 0x9800;
 	if ((m_ppu_io.lcdc & 0x08) != 0x00) {
 		tile_map_base = 0x9c00;
-		printf("using 0x9c00 tile index current ly = %02X\n", m_ppu_io.ly);
 	}
 
 	tile_map_base += ((m_ppu_io.scx / 8) + m_fifo.bg_w.fetcher_x);
@@ -445,7 +450,6 @@ void PPU::fetcher_number() {
 		tile_data_address += (m_fifo.bg_w.tile_index * 16);
 	}
 	else {
-		printf("signed mode used!\n");
 		if (m_fifo.bg_w.tile_index > 0x7f) {
 			tile_data_address = 0x8800;
 		}

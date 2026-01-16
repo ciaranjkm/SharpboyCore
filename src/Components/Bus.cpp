@@ -11,97 +11,86 @@ Bus::~Bus() {
 //UPDATE COMPONENT POINTERS
 bool Bus::update_cartridge_ptr(Cartridge* cart) {
 	m_cart = cart;
-
 	if (m_cart) {
 		return true;
 	}
-
 	return false;
 }
 
 bool Bus::update_imu_ptr(IMU* imu) {
 	m_imu = imu;
-
 	if (m_imu) {
 		return true;
 	}
-
 	return false;
 }
 
 bool Bus::update_ppu_ptr(PPU* ppu) {
 	m_ppu = ppu;
-
 	if (m_ppu) {
 		return true;
-	}
-	
+	}	
 	return false;
 }
 
 bool Bus::update_timer_ptr(Timer* timer) {
 	m_timer = timer;
-
 	if (m_timer) {
 		return true;
 	}
-
 	return false;
 }
 
-//DMA
-void Bus::dma_start() {
-	dma_active = true;
-}
-
-void Bus::dma_end() {
-	dma_active = false;
+bool Bus::update_joypad_ptr(Joypad* joypad) {
+	m_joypad = joypad;
+	if (m_joypad) {
+		return true;
+	}
+	return false;
 }
 
 //MEMORY ACCESS AND REDIRECTION
 u8 Bus::cpu_read(u16 address) {
 	if (address >= 0x0000 && address < 0x8000) {
-		last_value = m_cart->read(address);
-		return last_value;
+		m_last_value = m_cart->read(address);
+		return m_last_value;
 	}
 	else if (address >= 0x8000 && address < 0xa000) {
-		last_value = m_ppu->read(address);
-		return last_value;
+		m_last_value = m_ppu->read(address);
+		return m_last_value;
 	}
 	else if (address >= 0xa000 && address < 0xc000) {
-		last_value = m_cart->read(address);
-		return last_value;
+		m_last_value = m_cart->read(address);
+		return m_last_value;
 	}
 	else if (address >= 0xc000 && address < 0xe000) {
-		last_value = m_imu->read(address);
-		return last_value;
+		m_last_value = m_imu->read(address);
+		return m_last_value;
 	}
 	else if (address >= 0xe000 && address < 0xfe00) {
-		last_value = m_imu->read((u16)(address - 0x2000));
-		return last_value;
+		m_last_value = m_imu->read((u16)(address - 0x2000));
+		return m_last_value;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		if (dma_active) {
-			return 0xff;
-		}
-
-		last_value = m_ppu->read(address);
-		return last_value;
+		m_last_value = m_ppu->read(address);
+		return m_last_value;
 	}
 	else if ((address >= 0xff00 && address < 0xff80) || address == 0xffff) {		
-		last_value = read_io(address);
-		return last_value;
+		m_last_value = read_io(address);
+		return m_last_value;
 	}
 	else if (address >= 0xff80 && address < 0xffff) {
-		last_value = m_imu->read(address);
-		return last_value;
+		m_last_value = m_imu->read(address);
+		return m_last_value;
 	}
 	else {
-		return last_value;
+		return m_last_value;
 	}
 }
 
 void Bus::cpu_write(u16 address, u8 value) {
+	m_last_value = value;
+
 	if (address >= 0x0000 && address < 0x8000) {
 		m_cart->write(address, value);
 		return;
@@ -122,10 +111,6 @@ void Bus::cpu_write(u16 address, u8 value) {
 		return;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		if (dma_active) {
-			return;
-		}
-
 		m_ppu->write(address, value);
 		return;
 	}
@@ -216,7 +201,10 @@ u8 Bus::read_io(u16 address) {
 	else if (address == io_ie) {
 		return Interrupts::read_ie();
 	}
-	else if (address >= io_joyp && address <= io_sc) {
+	else if (address == io_joyp) {
+		return m_joypad->read_joypad_state();
+	}
+	else if (address > io_joyp && address <= io_sc) {
 		return m_imu->read_io(address);
 	}
 	else if (address >= io_div && address <= io_tac) {
@@ -241,22 +229,25 @@ u8 Bus::read_io(u16 address) {
 }
 
 void Bus::write_io(u16 address, u8 value) {
-	if (address == io_lcdc) {
-		printf("lcdc write %02X\n", value);
-	}
-
 	if (address == io_if) {
 		Interrupts::write_if(value);
+		return;
 	}
 	else if (address == io_ie) {
 		Interrupts::write_ie(value);
+		return;
 	}
-	else if (address >= io_joyp && address <= io_sc) {
+	else if (address == io_joyp) {
+		m_joypad->write_to_joyp(value);
+		return;
+	}
+	else if (address > io_joyp && address <= io_sc) {
 		m_imu->write_io(address, value);
 		return;
 	}
 	else if (address >= io_div && address <= io_tac) {
 		m_timer->write_io(address, value);
+		return;
 	}
 	else if (address >= io_nr10 && address <= io_nr52) {
 		//audio io write
@@ -268,8 +259,10 @@ void Bus::write_io(u16 address, u8 value) {
 	}
 	else if (address >= io_lcdc && address <= io_wx) {
 		m_ppu->write_io(address, value);
+		return;
 	}
 	else if (address == io_bank) {
 		m_cart->write(address, value);
+		return;
 	}
 }
