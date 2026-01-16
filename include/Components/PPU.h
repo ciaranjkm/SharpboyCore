@@ -93,7 +93,7 @@ struct s_basic_fifo {
 	u8 tile_low = 0x00;
 	u8 tile_high = 0x00;
 
-	bool is_active() const { return (current_state != fifo_inactive); }
+	int fetcher_x = 0;
 };
 
 struct s_pixel {
@@ -103,20 +103,15 @@ struct s_pixel {
 };
 
 struct s_ppu_fifos {
-	s_basic_fifo background = {};
-	s_basic_fifo window = {};
+	s_basic_fifo bg_w = {};
 	s_basic_fifo sprite = {};
 
-	bool is_window_fifo_active = false;
 	int ticks = 0;
-	int screen_x = 0;
-	int fetcher_x = 0;
-	
-	bool dummy_fetch = false; //one background tile fetch before real fetches
-	bool discard_fetch = false;
+	bool ready = false;
+	bool start_of_scanline = true;
 
-	bool start_of_scanline = false;
 	int discard = 0;
+	int screen_x = 0;
 };
 
 struct s_draw_data {
@@ -139,6 +134,14 @@ struct s_ppu_context {
 	
 	bool send_vblank = false;
 	int ticks_until_vblank = 4;
+	bool block_vram = false;
+	bool block_oam = false;
+
+	u8 new_ly = 0x00;
+	bool ly_increment = false;
+
+	bool update_stat = false;
+	int update_stat_count = 0;
 
 	u8 current_ly = 0x00;
 	u8 current_scx = 0x00;
@@ -166,7 +169,7 @@ public:
 	void reset_frame_ready();
 	
 	std::array<u32, FRAME_BUFFER_SIZE>* get_frame_buffer();
-	//std::array<u8, VRAM_SIZE>* get_vram();
+	std::array<u8, VRAM_SIZE>* get_vram();
 
 	//MEMORY ACCESS
 	u8 read(u16 address) const;
@@ -183,7 +186,6 @@ private:
 
 	//FIFO + DRAWING MEMBER VARIABLES
 	s_ppu_fifos m_fifo = {};
-	std::queue<u8> m_fifo_buffer = std::queue<u8>();
 	std::queue<s_pixel> background_fifo = std::queue<s_pixel>();
 
 	std::unique_ptr<s_draw_data> m_draw_data = nullptr;
@@ -205,6 +207,7 @@ private:
 	//INTERRUPTS + STAT
 	void check_ly_lyc();
 	void latch_start_line_values();
+	void change_stat_mode(e_ppu_mode new_mode);
 
 	//FIFO BG/SPRITE 
 	//todo modify this to decide what fifo to use and grab a ref to it
@@ -213,6 +216,9 @@ private:
 	void fetcher_low();
 	void fetcher_high();
 	void fetcher_push();
+
+	void reset_fifos();
+	u16 convert_tile_id_to_address(u8 tile_id);
 
 	void output_pixels();
 };

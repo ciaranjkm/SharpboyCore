@@ -3,7 +3,7 @@
 #include <array>
 
 #include "Cartridge.h"
-#include "../../Utilities/Logger.h"
+#include "../../Utilities/SBLogger.h"
 
 /*
 	In the default configuration supports up to 512KiB of ROM with up to 32KiB of banked RAM.

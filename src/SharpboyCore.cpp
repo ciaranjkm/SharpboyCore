@@ -5,24 +5,23 @@ SharpboyCore::SharpboyCore() {
 
 	//LINK COMPONENTS
 	if (!m_components.link_components(&m_syncroniser)) {
-		m_current_error = { error_fatal, "Component link failed" };
+		Logger::Log("Failed to link components", LOGGER_LV_ERROR);
 		return;
 	}
 
 	m_core_context.initialised = true;
 	m_core_context.emu_ready = true;
+
+	Logger::Log("SharpboyCore instance ready", LOGGER_LV_INFO);
 }
 
 SharpboyCore::~SharpboyCore() {
 	m_components.reset_components();
+	Logger::Log("SharpboyCore instance destroyed", LOGGER_LV_INFO);
 }
 
 bool SharpboyCore::is_initialised() const {
 	return m_core_context.initialised;
-}
-
-s_core_error SharpboyCore::get_error() {
-	return m_current_error;
 }
 
 std::array<u32, 160 * 144>* SharpboyCore::get_frame_buffer() {
@@ -46,21 +45,29 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	m_core_context.using_boot_rom = using_boot_rom;
 
 	//READ ROM + OPTIONAL BOOT ROM INTO MEMORY
+	std::filesystem::path rom_path = m_core_context.roms_directory / rom_file_name;
+
 	std::vector<u8> rom = std::vector<u8>();
-	std::vector<u8> boot_rom = std::vector<u8>();
-	if (!FileReader::read_rom_file(rom, rom_file_name)){
-		m_current_error = { error_initialisation, "Could not read ROM file" };
+	rom.resize(FileReader::get_file_size(rom_path));
+
+	if (!FileReader::read_file_in_bytes(rom, rom_path)){
+		Logger::Log(std::format("Failed to read ROM file : {}", rom_file_name.string()), LOGGER_LV_ERROR);
 		return false;
 	}
+
+	std::vector<u8> boot_rom = std::vector<u8>();
+	boot_rom.resize(FileReader::get_file_size(m_core_context.boot_rom_file));
+
 	if (m_core_context.using_boot_rom) {
-		if (!FileReader::read_rom_file(boot_rom, "BOOT.bin", true)) {
+		if (!FileReader::read_file_in_bytes(boot_rom, m_core_context.boot_rom_file)) {
 			m_core_context.using_boot_rom = false;
+			Logger::Log("Continuing without boot ROM, could not be read or found", LOGGER_LV_WARNING);
 		}
 	}
 
 	//ASSIGN A CARTRIDGE TYPE FOR THE ROM
 	if (!m_components.assign_cart_type(CART_ROM)) { //todo rom only for testing
-		m_current_error = { error_initialisation, "Could not create cartridge object for this ROM" };
+		Logger::Log("Could not create a cartridge object for this ROM!", LOGGER_LV_ERROR);
 		return false;
 	}
 
@@ -73,6 +80,8 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	m_core_context.emu_ready = false;
 	m_core_context.emu_active = true;
 	return true;
+
+	Logger::Log(std::format("SharpboyCore instance loaded {} correctly", rom_file_name.string()), LOGGER_LV_INFO);
 }
 
 void SharpboyCore::cleanup_current_instance() {
@@ -81,6 +90,24 @@ void SharpboyCore::cleanup_current_instance() {
 
 	m_core_context.emu_active = false;
 	m_core_context.emu_ready = true;
+
+	Logger::Log("SharpboyCore instance cleaned up correctly", LOGGER_LV_INFO);
+}
+
+void SharpboyCore::set_roms_directory(std::filesystem::path directory) {
+	m_core_context.roms_directory = directory;
+}
+
+std::filesystem::path SharpboyCore::get_roms_directory() const {
+	return m_core_context.roms_directory;
+}
+
+void SharpboyCore::set_boot_rom_file(std::filesystem::path file_name) {
+	m_core_context.boot_rom_file = file_name;
+}
+
+std::filesystem::path SharpboyCore::get_boot_rom_file() const {
+	return m_core_context.boot_rom_file;
 }
 
 int SharpboyCore::run() {
@@ -88,56 +115,10 @@ int SharpboyCore::run() {
 	return cycles_advanced;
 }
 
-void SharpboyCore::run_ssts(bool show_all_results, bool prefixed) {
-	SST sst(FileReader::get_path(path_sst), prefixed);
-
-	std::chrono::time_point start_time = std::chrono::high_resolution_clock::now();
-
-	std::thread sst_thread = std::thread([&sst]() {sst.run(); });
-	sst_thread.detach();
-
-	while (!sst.is_test_complete()) {
-		float progess = (((float)(sst.get_completed_tests_count()) / SMALL_TEST_COUNT) * 100.0f);
-		std::string msg = std::format("Completing SSTs, progess: {}%", (int)progess);
-		Logger::log(log_sst_status, msg);
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(300));
-	}
-
-	if (sst_thread.joinable()) {
-		sst_thread.join();
-	}
-
-	std::chrono::duration<float> elapsed_time = std::chrono::high_resolution_clock::now() - start_time;
-
-	std::array<s_test_result, SMALL_TEST_COUNT>* results = sst.get_results();
-	std::vector<std::string> output = std::vector<std::string>();
-
-	//ACCOUNT FOR HALT STOP CB AND ILLEGALS IN FIRST OPCODE TABLE
-	int failed_tests = prefixed ? 0 : -14;
-	int tests_completed = prefixed ? 0 : -14;
-
-	for (s_test_result result : *results) {
-		if (!result.result) {
-			output.push_back(std::format("{}", result.msg));
-			failed_tests++;
-		}
-		else if (show_all_results) {
-			output.push_back(std::format("{}", result.msg));
-		}
-
-		tests_completed++;
-	}
-
-	std::string msg = std::format("SSTs complete, time taken: {}s", elapsed_time.count());
-	Logger::log(log_sst_status, msg);
-	Logger::log(log_sst_status, std::format("Tests completed: {} | Tests failed: {}", tests_completed, failed_tests));
-	for (int i = 0; i < output.size(); i++) {
-		Logger::log(log_sst_status, output[i]);
-	}
-	results = nullptr;
-}
-
 s_core_context* SharpboyCore::get_core_context() {
 	return &m_core_context;
+}
+
+ComponentManager* SharpboyCore::get_component_manager() {
+	return &m_components;
 }

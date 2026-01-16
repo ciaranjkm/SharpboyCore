@@ -48,6 +48,13 @@ void PPU::reset(bool using_boot_rom) {
 
 //EXECUTION
 void PPU::tick() {
+	if (m_ppu.ly_increment) {
+		m_ppu.ly_increment = false;
+		m_ppu_io.ly = m_ppu.new_ly;
+
+		//check_ly_lyc();
+	}
+
 	m_ppu.ticks++;
 
 	switch (m_ppu.current_mode) {
@@ -80,7 +87,7 @@ void PPU::dma_tick() {
 		m_dma.ticks_since_start++;
 
 		//ALLIGN TO CPU CLOCK + 1 M CYCLE
-		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 2) {
+		if (m_dma.ticks_since_start == DEFAULT_DMA_DELAY + 1) {
 			if (!m_dma.active) {
 				m_dma.active = true;
 				m_bus->dma_start();
@@ -132,38 +139,17 @@ std::array<u32, FRAME_BUFFER_SIZE>* PPU::get_frame_buffer() {
 	return &m_draw_data->completed_frame;
 }
 
-//GET VRAM HERE
+std::array<u8, VRAM_SIZE>* PPU::get_vram() {
+	return &m_memory->vram;
+}
 
 //MEMORY ACCESS
 u8 PPU::read(u16 address) const {
 	if (address >= 0x8000 && address < 0xa000) {
 		return m_memory->vram[u16(address - 0x8000)];
-
-		/*
-		//only allow reads during hblank and vblank
-		if (m_ppu.current_mode == ppu_draw) {
-			return 0xff;
-		}
-		else {
-			return m_vram[u16(address - 0x8000)];
-		}
-		*/
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		if (m_dma.active) {
-			return 0xff;
-		}
-
 		return m_memory->oam[u16(address - 0xfe00)];
-
-		/*
-		if ((m_ppu.current_mode == ppu_oam) || (m_ppu.current_mode == ppu_draw) || (m_dma.active)){
-			return 0xff;
-		}
-		else {
-			return m_oam[u16(address - 0xfe00)];
-		}
-		*/
 	}
 	
 	return 0xff;
@@ -171,34 +157,10 @@ u8 PPU::read(u16 address) const {
 
 void PPU::write(u16 address, u8 value) {
 	if (address >= 0x8000 && address < 0xa000) {
-		m_memory->vram[(u16)(address - 0x8000)] = value;
-
-		/*
-		if (m_ppu.current_mode == ppu_draw) {
-			return;
-		}
-		else {
-			m_vram[(u16)(address - 0x8000)] = value;
-			return;
-		}
-		*/
+		m_memory->vram[u16(address - 0x8000)] = value;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
-		if (m_dma.active) {
-			return;
-		}
-
-		m_memory->oam[(u16)(address - 0xfe00)] = value;
-
-		/*
-		if ((m_ppu.current_mode == ppu_oam) || (m_ppu.current_mode == ppu_draw) || (m_dma.active)) {
-			return;
-		}
-		else {
-			m_oam[(u16)(address - 0xfe00)] = value;
-			return;
-		}
-		*/
+		m_memory->oam[u16(address - 0xfe00)] = value;
 	}
 }
 
@@ -239,7 +201,8 @@ void PPU::write_io(u16 address, u8 value) {
 		m_ppu_io.lcdc = value;
 		return;
 	case io_stat:
-		m_ppu_io.stat = value;
+		m_ppu_io.stat = value & 0xfc;
+		m_ppu_io.stat |= 0x80;
 		return;
 	case io_scy:
 		m_ppu_io.scy = value;
@@ -247,11 +210,9 @@ void PPU::write_io(u16 address, u8 value) {
 	case io_scx:
 		m_ppu_io.scx = value;
 		return;
-	case io_ly:
-		m_ppu_io.ly = value;
-		return;
 	case io_lyc:
 		m_ppu_io.lyc = value;
+		//check_ly_lyc();
 		return;
 	case io_bgp:
 		m_ppu_io.bgp = value;
@@ -270,14 +231,13 @@ void PPU::write_io(u16 address, u8 value) {
 		return;
 
 	case io_dma:
-		m_dma.start_new = true;
+		m_ppu_io.dma = value;
 		m_dma.start_byte = value;
+
+		m_dma.start_new = true;
 		m_dma.ticks_since_start = 0;
 
-		m_ppu_io.dma = value;
-
 		return;
-
 
 	default:
 		return ;
@@ -292,25 +252,15 @@ u8 PPU::bus_read(u16 address) {
 
 //PPU MODE TICKS
 void PPU::oam_tick() {
-	if (m_ppu.ticks == 4) {
-		check_ly_lyc();
-	}
-
-	//do nothing for now just wait for mode change
 	if (m_ppu.ticks == OAM_DURATION) {
-		m_ppu.ticks -= OAM_DURATION;
+		m_ppu.ticks = 0;
 		m_ppu.current_mode = ppu_draw;
 
-		//clear + reset fifo for the next line
-		m_fifo.dummy_fetch = true;
-		m_fifo.discard_fetch = true;
-		m_fifo.start_of_scanline = true;
-		m_fifo.screen_x = 0;
-		m_fifo.fetcher_x = 0;
-		m_fifo.discard = 0;
+		change_stat_mode(m_ppu.current_mode);
 
-		//latch values of scx, scy and ly for next line
 		latch_start_line_values();
+
+		reset_fifos();
 	}
 }
 
@@ -318,30 +268,33 @@ void PPU::draw_tick() {
 	tick_bg_fetcher();
 	output_pixels();
 
-	if (m_fifo.screen_x >= 160) {
+	if (m_fifo.screen_x >= DISPLAY_WIDTH) {
 		m_ppu.ticks_in_hblank = SCANLINE_LENGTH - (m_ppu.ticks + OAM_DURATION);
 		m_ppu.ticks = 0;
 
 		m_ppu.current_mode = ppu_hblank;
+
+		change_stat_mode(m_ppu.current_mode);
 	}
 }
 
 void PPU::hblank_tick() {
 	if (m_ppu.ticks == m_ppu.ticks_in_hblank) {
 		m_ppu.ticks = 0;
-	
-		//clear fifo
-		for (int i = 0; i < background_fifo.size(); i++) {
-			background_fifo.pop();
-		}
 		
-		m_ppu.current_mode = (++m_ppu_io.ly >= DISPLAY_HEIGHT) ? ppu_vblank : ppu_oam;
-		m_ppu.send_vblank = true;
-		m_ppu.ticks_until_vblank = 4;
+		m_ppu.new_ly = u8(m_ppu_io.ly + 1);
+		m_ppu.current_mode = (m_ppu.new_ly >= DISPLAY_HEIGHT) ? ppu_vblank : ppu_oam;
+		
+		change_stat_mode(m_ppu.current_mode);
+
+		m_ppu.ly_increment = true;
 
 		if (m_ppu.current_mode == ppu_vblank) {
 			m_ppu.is_frame_ready = true;
 			m_draw_data->completed_frame = m_draw_data->frame;
+
+			m_ppu.send_vblank = true;
+			m_ppu.ticks_until_vblank = 4;
 		}
 	}
 }
@@ -356,29 +309,79 @@ void PPU::vblank_tick() {
 	}
 	
 	if (m_ppu.ticks == SCANLINE_LENGTH) {
-		m_ppu.current_mode = (++m_ppu_io.ly >= DISPLAY_HEIGHT + 10) ? ppu_oam : ppu_vblank;
+		m_ppu.new_ly = u8(m_ppu_io.ly + 1);
+		m_ppu.current_mode = (m_ppu.new_ly >= DISPLAY_HEIGHT + 10) ? ppu_oam : ppu_vblank;
 		m_ppu.ticks = 0;
-	
+
+		m_ppu.ly_increment = true;
+
 		if (m_ppu.current_mode == ppu_oam) {
-			m_ppu_io.ly = 0;
+			change_stat_mode(m_ppu.current_mode);
+
+			m_ppu.new_ly = 0x00;
 		}
 	}
 }
 
+//INTERRUPTS + STAT
+
 void PPU::check_ly_lyc() {
-	if (m_ppu_io.ly == m_ppu_io.lyc) {
+	bool previous = ((m_ppu_io.stat & 0x02) != 0x00);
+	bool new_irq = m_ppu_io.ly == m_ppu_io.lyc;
+
+	if (new_irq) {
 		m_ppu_io.stat |= (0x2);
-		Interrupts::send_interrupt(interrupt_lcd);
 	}
 	else {
 		m_ppu_io.stat &= ~(0x2);
 	}
+
+	if (!previous && new_irq) {
+		if ((m_ppu_io.stat & 0x40) != 0x00) {
+			Interrupts::send_interrupt(interrupt_lcd);
+		}
+	}
 }
 
 void PPU::latch_start_line_values() {
-	m_ppu.current_ly = m_ppu_io.ly;
+	m_ppu_io.ly = m_ppu_io.ly;
 	m_ppu.current_scx = m_ppu_io.scx;
-	m_ppu.current_scy = m_ppu_io.scy;
+	m_ppu_io.scy = m_ppu_io.scy;
+}
+
+void PPU::change_stat_mode(e_ppu_mode new_mode) {
+	u8 mode_value = 0x00;
+	
+	switch (new_mode) {
+	case ppu_hblank:
+		mode_value = 0x00;
+		break;
+
+	case ppu_vblank:
+		mode_value = 0x01;
+		break;
+
+	case ppu_oam:
+		mode_value = 0x02;
+		break;
+
+	case ppu_draw:
+		mode_value = 0x03;
+		break;
+
+	default:
+		return;
+	}
+
+	m_ppu_io.stat = (m_ppu_io.stat & ~0x03) | mode_value;
+
+	if (new_mode == ppu_draw) {
+		return;
+	}
+
+	if ((m_ppu_io.stat & (1 << (mode_value + 0x03)))) {
+		Interrupts::send_interrupt(interrupt_lcd);
+	}
 }
 
 //FIFO BG/SPRITE
@@ -389,84 +392,85 @@ void PPU::tick_bg_fetcher() {
 		return;
 	}
 
-	switch (m_fifo.background.current_state) {
+	m_fifo.ticks = 0;
+
+	switch (m_fifo.bg_w.current_state) {
 	case fifo_fetch_tile_number:
 		fetcher_number();
-		m_fifo.background.current_state = fifo_fetch_low;
-		m_fifo.ticks = 0;
-
+		m_fifo.bg_w.current_state = fifo_fetch_low;
 		break;
 
 	case fifo_fetch_low:
 		fetcher_low();
-		m_fifo.background.current_state = fifo_fetch_high;
-		m_fifo.ticks = 0;
-
+		m_fifo.bg_w.current_state = fifo_fetch_high;
 		break;
 
 	case fifo_fetch_high:
 		fetcher_high();
-		m_fifo.background.current_state = fifo_pushing;
-		m_fifo.ticks = 0;
-
-		if (m_fifo.dummy_fetch) {
-			m_fifo.dummy_fetch = false;
-			m_fifo.background.current_state = fifo_fetch_tile_number;
+		m_fifo.bg_w.current_state = fifo_pushing;
+		
+		if (m_fifo.start_of_scanline) {
+			m_fifo.start_of_scanline = false;
+			m_fifo.bg_w.current_state = fifo_fetch_tile_number;
 		}
-			
+
 		break;
 
 	case fifo_pushing:
 		fetcher_push();
-
-		m_fifo.background.current_state = fifo_fetch_tile_number;
-		m_fifo.ticks = 0;
-			
+		m_fifo.bg_w.current_state = fifo_fetch_tile_number;
 		break;
 
 	default:
-		break;
+		return;
 	}
+
 }
 
 void PPU::fetcher_number() {
-	u16 tile_map_base = 0x9800;
-	if (m_ppu_io.lcdc & 0x08) {
+	u16 tile_map_base = 0x9c00;
+	if ((m_ppu_io.lcdc & 0x08) != 0x00) {
 		tile_map_base = 0x9c00;
+		printf("using 0x9c00 tile index current ly = %02X\n", m_ppu_io.ly);
 	}
 
-	tile_map_base += ((m_ppu.current_scx / 8) + m_fifo.fetcher_x) & 0x1f;
-	tile_map_base += 32 * (((m_ppu.current_ly + m_ppu.current_scy) & 0xff) / 8);
+	tile_map_base += ((m_ppu_io.scx / 8) + m_fifo.bg_w.fetcher_x);
+	tile_map_base += 32 * (((m_ppu_io.ly + m_ppu_io.scy) & 0xff) / 8);
 
-	m_fifo.background.tile_index = m_memory->vram[u16(tile_map_base - 0x8000)];
+	m_fifo.bg_w.tile_index = m_memory->vram[u16(tile_map_base - 0x8000)];
 
 	u16 tile_data_address = 0x9000;
-	if ((m_ppu_io.lcdc & 0x10) != 0) {
+	if (m_ppu_io.lcdc & 0x10) {
 		tile_data_address = 0x8000;
-		tile_data_address += (m_fifo.background.tile_index * 16);
+		tile_data_address += (m_fifo.bg_w.tile_index * 16);
 	}
 	else {
-		s8 index = s8(m_fifo.background.tile_index);
-		tile_data_address += (index * 16);
+		printf("signed mode used!\n");
+		if (m_fifo.bg_w.tile_index > 0x7f) {
+			tile_data_address = 0x8800;
+		}
+		else {
+			tile_data_address = 0x9000;
+		}
 	}
 
-	tile_data_address += (2 * ((m_ppu.current_ly + m_ppu.current_scy) % 8));
-	m_fifo.background.tile_address = tile_data_address;
+	tile_data_address += (2 * ((m_ppu_io.ly + m_ppu_io.scy) % 8));
+	m_fifo.bg_w.tile_address = tile_data_address;
 }
 
 void PPU::fetcher_low() {
-	m_fifo.background.tile_low = m_memory->vram[u16(m_fifo.background.tile_address - 0x8000)];
+	m_fifo.bg_w.tile_low = m_memory->vram[u16(m_fifo.bg_w.tile_address - 0x8000)];
 }
 
 void PPU::fetcher_high() {
-	m_fifo.background.tile_high = m_memory->vram[u16((m_fifo.background.tile_address + 1) - 0x8000)];
+	m_fifo.bg_w.tile_high = m_memory->vram[u16((m_fifo.bg_w.tile_address + 1) - 0x8000)];
 }
 
 void PPU::fetcher_push() {
-	if (background_fifo.empty()) {
-		for (int bit = 7; bit >= 0; bit--) {
-			u8 low = (m_fifo.background.tile_low >> bit) & 0x01;
-			u8 high = (m_fifo.background.tile_high >> bit) & 0x01;
+	if (background_fifo.size() < 8) {
+		for (int b = 7; b > 0; b--) {
+			u8 low = (m_fifo.bg_w.tile_low >> b) & 0x01;
+			u8 high = (m_fifo.bg_w.tile_high >> b) & 0x01;
 
 			u8 colour = (high << 1) | low;
 
@@ -476,51 +480,57 @@ void PPU::fetcher_push() {
 				.sprite = false
 			};
 
-			if (background_fifo.size() < 16) {
-				background_fifo.push(p);
-			}
+			background_fifo.push(p);
 		}
 
-		if (m_fifo.discard_fetch) {
-			return;
-		}
+		m_fifo.bg_w.fetcher_x++;
+	}
+}
 
-		m_fifo.fetcher_x++;
+void PPU::reset_fifos() {
+	m_fifo = {};
+
+	while (!background_fifo.empty()) {
+		background_fifo.pop();
+	}
+}
+
+u16 PPU::convert_tile_id_to_address(u8 tile_id) {
+	if (m_ppu_io.lcdc & 0x10) {
+		u16 tile_data_address = 0x8000 + (tile_id * 0x10);
+		tile_data_address += ((2 * (m_ppu_io.ly + m_ppu_io.scy)) % 8);
+		return tile_data_address;
+	}
+	else {
+		s8 s_tile_id = s8(tile_id);
+		u16 tile_data_address = 0x9000 + (s_tile_id * 0x10);
+		tile_data_address += ((2 * (m_ppu_io.ly + m_ppu_io.scy)) % 8);
+		return tile_data_address;
 	}
 }
 
 void PPU::output_pixels() {
-	if (m_fifo.start_of_scanline) {
-		m_fifo.discard = (m_ppu.current_scx % 8);
-		m_fifo.start_of_scanline = false;
-	}
+	if (!background_fifo.empty()) {
+		if (!m_fifo.ready) {
+			if (background_fifo.size() >= 8) {
+				for (int i = 0; i < (m_ppu_io.scx % 0x08); i++) {
+					background_fifo.pop();
+				}
 
-	if (m_fifo.discard != 0) {
-		//fine x scrolling
-		if (!background_fifo.empty()) {
-			background_fifo.pop();
-			m_fifo.discard--;
-			return;
+				m_fifo.ready = true;
+				return;
+			}
 		}
-	}
 
-	if (background_fifo.empty()) {
-		//fifo should be empty to push pixels
-		return;
-	}
+		if (m_fifo.ready) {
+			s_pixel out = background_fifo.front();
+			background_fifo.pop();
 
-	s_pixel pixel_to_output = background_fifo.front();
-	background_fifo.pop();
+			int shift = out.colour * 2;
+			int colour = (m_ppu_io.bgp >> shift) & 0x03;
 
-	int shift = pixel_to_output.colour * 2;
-	int p_colour = (pixel_to_output.palette >> shift) & 0x03;
-
-	m_draw_data->frame[m_ppu.current_ly * 160 + m_fifo.screen_x] = sb_colours[p_colour];
-	m_fifo.screen_x++;
-
-	//hacky
-	if (m_fifo.screen_x == 8 && m_fifo.discard_fetch) {
-		m_fifo.discard_fetch = false;
-		m_fifo.screen_x = 0;
+			m_draw_data->frame[m_ppu_io.ly * DISPLAY_WIDTH + m_fifo.screen_x] = sb_colours[colour];
+			m_fifo.screen_x++;
+		}
 	}
 }

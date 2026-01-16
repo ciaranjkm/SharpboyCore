@@ -54,22 +54,22 @@ int CPU::step() {
 }
 
 u8 CPU::read(u16 address) { 
-	tick_components(2);			
+	tick_components(3);			
 	u8 value = m_bus->cpu_read(address);	
-	tick_components(2);					
+	tick_components(1);					
 	return value;
 }
 
 void CPU::write(u16 address, u8 value) {
-	tick_components(2);		
+	tick_components(3);		
 	m_bus->cpu_write(address, value);	
-	tick_components(2);					
+	tick_components(1);					
 }
 
 u8 CPU::read_pc(bool read_interrupt) {
-	tick_components(2);
+	tick_components(3);
 	u8 value = m_bus->cpu_read(m_registers.pc++);
-	tick_components(2);
+	tick_components(1);
 	return value;
 }
 

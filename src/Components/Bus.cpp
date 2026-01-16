@@ -81,6 +81,10 @@ u8 Bus::cpu_read(u16 address) {
 		return last_value;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
+		if (dma_active) {
+			return 0xff;
+		}
+
 		last_value = m_ppu->read(address);
 		return last_value;
 	}
@@ -118,6 +122,10 @@ void Bus::cpu_write(u16 address, u8 value) {
 		return;
 	}
 	else if (address >= 0xfe00 && address < 0xfea0) {
+		if (dma_active) {
+			return;
+		}
+
 		m_ppu->write(address, value);
 		return;
 	}
@@ -233,6 +241,10 @@ u8 Bus::read_io(u16 address) {
 }
 
 void Bus::write_io(u16 address, u8 value) {
+	if (address == io_lcdc) {
+		printf("lcdc write %02X\n", value);
+	}
+
 	if (address == io_if) {
 		Interrupts::write_if(value);
 	}

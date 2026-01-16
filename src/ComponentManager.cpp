@@ -100,6 +100,10 @@ CPU* ComponentManager::get_cpu() {
 	return &m_cpu;
 }
 
+s_registers* ComponentManager::get_cpu_registers() {
+	return m_cpu.get_registers();
+}
+
 Bus* ComponentManager::get_bus() {
 	return &m_bus;
 }
@@ -122,6 +126,10 @@ void ComponentManager::ppu_reset_frame_ready() {
 
 std::array<u32, 160 * 144>* ComponentManager::get_ppu_frame_buffer() {
 	return m_ppu.get_frame_buffer();
+}
+
+std::array<u8, VRAM_SIZE>* ComponentManager::get_ppu_vram() {
+	return m_ppu.get_vram();
 }
 
 Timer* ComponentManager::get_timer() {

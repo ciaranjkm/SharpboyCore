@@ -38,7 +38,7 @@ public:
 
 	//CPU
 	CPU* get_cpu();
-	s_registers* get_cpu_regs();
+	s_registers* get_cpu_registers();
 
 	//BUS
 	Bus* get_bus();
@@ -51,6 +51,7 @@ public:
 	bool is_ppu_frame_ready();
 	void ppu_reset_frame_ready();
 	std::array<u32, 160 * 144>* get_ppu_frame_buffer();
+	std::array<u8, VRAM_SIZE>* get_ppu_vram();
 
 	Timer* get_timer();
 	Cartridge* get_base_cart();

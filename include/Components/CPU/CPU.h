@@ -1,5 +1,5 @@
 #pragma once
-#include "Utilities/Logger.h"
+#include "Utilities/SBLogger.h"
 #include "../../Common.h"
 #include <array>
 

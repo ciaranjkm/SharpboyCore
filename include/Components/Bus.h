@@ -41,5 +41,6 @@ private:
 	Timer* m_timer = nullptr;
 
 	bool dma_active = false;
+	u8 dma_previous_value = 0x00;
 	u8 last_value = 0x00;
 };

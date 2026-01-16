@@ -6,9 +6,8 @@
 #include <chrono>
 #include <functional>
 
-#include "Utilities/FileReader.h"
-#include "Utilities/SST.h"
-#include "Utilities/Logger.h"
+#include "Utilities/SBReader.h"
+#include "Utilities/SBLogger.h"
 
 #include "Sync.h"
 #include "ComponentManager.h"
@@ -19,32 +18,9 @@ struct s_core_context {
 	bool emu_ready = false;
 	bool emu_active = false;
 	bool using_boot_rom = false;
-};
 
-//TODO REFACTOR ERROR AND LOGGING
-enum e_error_type {
-	error_fatal,
-	error_initialisation,
-	error_other,
-	error_none
-};
-
-struct s_core_error {
-	e_error_type type = error_none;
-	std::string current_error = "";
-
-	s_core_error(e_error_type t = error_none, std::string e = "") {
-		type = t;
-		current_error = e;
-	}
-
-	std::string get_msg() const {
-		return current_error;
-	}
-
-	e_error_type get_type() const {
-		return type;
-	}
+	std::filesystem::path roms_directory = "";
+	std::filesystem::path boot_rom_file = "";
 };
 
 struct s_core_sst_context {
@@ -75,6 +51,12 @@ public:
 	bool initialise_new_instance(std::filesystem::path rom_file_name, bool using_boot_rom = false);
 	void cleanup_current_instance();
 
+	void set_roms_directory(std::filesystem::path roms_directory);
+	std::filesystem::path get_roms_directory() const;
+
+	void set_boot_rom_file(std::filesystem::path path);
+	std::filesystem::path get_boot_rom_file() const;
+
 	//RUN TO BE CALLED IN THE MAIN LOOP
 	int run();
 
@@ -91,25 +73,15 @@ public:
 	void reset_audio_buffer_ready();
 	bool get_audio_buffer_ready();
 
-	//DEBUG + SST
-	/*
-	EXECUTE ALL SINGLE STEP TESTS FOR NORMAL AND PREFIXED OPCODES (HALT, STOP, ILLEGAL NOT INCL.) PROOF OF CONCEPT REALLY
-	USES THE SST PATH IN FILEREADER STATIC OBJECT, MAKE SURE IT IS UPDATED BEFORE RUNNING OR ALL FAILS
-	*/
-	void run_ssts(bool show_all_results, bool prefixed);
-	s_core_error get_error();
+	//DEBUG
 	s_core_context* get_core_context();
+	ComponentManager* get_component_manager();
 
 private:
 	//CONTEXTS
 	s_core_context m_core_context;
-	s_core_error m_current_error;
 
 	//COMPONENTS
 	ComponentManager m_components;
 	Syncroniser m_syncroniser;
-
-	//SINGLE STEP TEST 
-	s_core_sst_context m_sst_context;
-
 };
