@@ -48,13 +48,6 @@ void PPU::reset(bool using_boot_rom) {
 
 //EXECUTION
 void PPU::tick() {
-	if (m_ppu.ly_increment) {
-		m_ppu.ly_increment = false;
-		m_ppu_io.ly = m_ppu.new_ly;
-
-		//check_ly_lyc();
-	}
-
 	m_ppu.ticks++;
 
 	switch (m_ppu.current_mode) {
@@ -259,14 +252,14 @@ u8 PPU::bus_read(u16 address) {
 //PPU MODE TICKS
 void PPU::oam_tick() {
 	if (m_ppu.ticks == OAM_DURATION) {
+		//std::cout << "oam ticks: " << m_ppu.ticks << "\n";
 		m_ppu.ticks = 0;
 		m_ppu.current_mode = ppu_draw;
 
-		change_stat_mode(m_ppu.current_mode);
-
 		latch_start_line_values();
-
 		reset_fifos();
+
+		change_stat_mode(m_ppu.current_mode);
 	}
 }
 
@@ -274,7 +267,9 @@ void PPU::draw_tick() {
 	tick_bg_fetcher();
 	output_pixels();
 
+	//WHEN 160 PIXELS HAVE BEEN DRAWN, MOVE TO HBLANK FOR THE REMAINING TICKS 
 	if (m_fifo.screen_x >= DISPLAY_WIDTH) {
+		//std::cout << "draw ticks: " << m_ppu.ticks << "\n";
 		m_ppu.ticks_in_hblank = SCANLINE_LENGTH - (m_ppu.ticks + OAM_DURATION);
 		m_ppu.ticks = 0;
 
@@ -286,15 +281,13 @@ void PPU::draw_tick() {
 
 void PPU::hblank_tick() {
 	if (m_ppu.ticks == m_ppu.ticks_in_hblank) {
+		//std::cout << "hblank ticks: " << m_ppu.ticks << "\n";
 		m_ppu.ticks = 0;
 		
-		m_ppu.new_ly = u8(m_ppu_io.ly + 1);
-		m_ppu.current_mode = (m_ppu.new_ly >= DISPLAY_HEIGHT) ? ppu_vblank : ppu_oam;
+		m_ppu_io.ly++;
+		check_ly_lyc();
+		m_ppu.current_mode = (m_ppu_io.ly >= DISPLAY_HEIGHT) ? ppu_vblank : ppu_oam;
 		
-		change_stat_mode(m_ppu.current_mode);
-
-		m_ppu.ly_increment = true;
-
 		if (m_ppu.current_mode == ppu_vblank) {
 			m_ppu.is_frame_ready = true;
 			m_draw_data->completed_frame = m_draw_data->frame;
@@ -302,6 +295,8 @@ void PPU::hblank_tick() {
 			m_ppu.send_vblank = true;
 			m_ppu.ticks_until_vblank = 4;
 		}
+
+		change_stat_mode(m_ppu.current_mode);
 	}
 }
 
@@ -315,42 +310,30 @@ void PPU::vblank_tick() {
 	}
 	
 	if (m_ppu.ticks == SCANLINE_LENGTH) {
-		m_ppu.new_ly = u8(m_ppu_io.ly + 1);
-		m_ppu.current_mode = (m_ppu.new_ly >= DISPLAY_HEIGHT + 10) ? ppu_oam : ppu_vblank;
+		m_ppu_io.ly++;
+		check_ly_lyc();
+		m_ppu.current_mode = (m_ppu_io.ly >= DISPLAY_HEIGHT + 10) ? ppu_oam : ppu_vblank;
+		//std::cout << "vblank ticks: " << m_ppu.ticks << "\n";
 		m_ppu.ticks = 0;
 
-		m_ppu.ly_increment = true;
-
 		if (m_ppu.current_mode == ppu_oam) {
-			change_stat_mode(m_ppu.current_mode);
-
-			m_ppu.new_ly = 0x00;
+			m_ppu_io.ly = 0x00;
 		}
+
+		change_stat_mode(m_ppu.current_mode);
 	}
 }
 
 //INTERRUPTS + STAT
 
 void PPU::check_ly_lyc() {
-	bool previous = ((m_ppu_io.stat & 0x02) != 0x00);
-	bool new_irq = m_ppu_io.ly == m_ppu_io.lyc;
-
-	if (new_irq) {
-		m_ppu_io.stat |= (0x2);
-	}
-	else {
-		m_ppu_io.stat &= ~(0x2);
-	}
-
-	if (!previous && new_irq) {
-		if ((m_ppu_io.stat & 0x40) != 0x00) {
-			Interrupts::send_interrupt(interrupt_lcd);
-		}
+	if (m_ppu_io.ly == m_ppu_io.lyc) {
+		Interrupts::send_interrupt(interrupt_lcd);
 	}
 }
 
 void PPU::latch_start_line_values() {
-	m_ppu_io.ly = m_ppu_io.ly;
+	m_ppu.current_ly = m_ppu_io.ly;
 	m_ppu.current_scx = m_ppu_io.scx;
 	m_ppu_io.scy = m_ppu_io.scy;
 }
@@ -414,12 +397,6 @@ void PPU::tick_bg_fetcher() {
 	case fifo_fetch_high:
 		fetcher_high();
 		m_fifo.bg_w.current_state = fifo_pushing;
-		
-		if (m_fifo.start_of_scanline) {
-			m_fifo.start_of_scanline = false;
-			m_fifo.bg_w.current_state = fifo_fetch_tile_number;
-		}
-
 		break;
 
 	case fifo_pushing:
@@ -434,32 +411,32 @@ void PPU::tick_bg_fetcher() {
 }
 
 void PPU::fetcher_number() {
-	u16 tile_map_base = 0x9800;
-	if ((m_ppu_io.lcdc & 0x08) != 0x00) {
-		tile_map_base = 0x9c00;
+	u16 tile_id_base = 0x9800;
+	if (m_ppu_io.lcdc & 0x08) {
+		tile_id_base = 0x9c00;
 	}
 
-	tile_map_base += ((m_ppu_io.scx / 8) + m_fifo.bg_w.fetcher_x);
-	tile_map_base += 32 * (((m_ppu_io.ly + m_ppu_io.scy) & 0xff) / 8);
+	u8 ly = m_ppu.current_ly;
+	u8 scx = (m_ppu_io.scx & 0xf8) | (m_ppu.current_scx & 0x07);
+	u8 scy = m_ppu_io.scy;
 
-	m_fifo.bg_w.tile_index = m_memory->vram[u16(tile_map_base - 0x8000)];
+	u8 ly_scy_offset = ((ly + scy) / 8) & 0x1f;
+	u8 lx_scx_offset = ((m_fifo.bg_w.fetcher_x + scx) / 8) & 0x1f;
 
-	u16 tile_data_address = 0x9000;
-	if (m_ppu_io.lcdc & 0x10) {
-		tile_data_address = 0x8000;
-		tile_data_address += (m_fifo.bg_w.tile_index * 16);
-	}
-	else {
-		if (m_fifo.bg_w.tile_index > 0x7f) {
-			tile_data_address = 0x8800;
-		}
-		else {
-			tile_data_address = 0x9000;
-		}
+	u16 tile_id_address = tile_id_base | (ly_scy_offset << 5) | lx_scx_offset;
+
+	m_fifo.bg_w.tile_index = m_memory->vram[u16(tile_id_address - 0x8000)];
+
+	u16 tile_data_base = 0x8000;
+	bool bit_twelve = !((m_ppu_io.lcdc & 0x10) || (m_fifo.bg_w.tile_index & 0x80));
+	if (bit_twelve) {
+		tile_data_base |= (1 << 12);
 	}
 
-	tile_data_address += (2 * ((m_ppu_io.ly + m_ppu_io.scy) % 8));
-	m_fifo.bg_w.tile_address = tile_data_address;
+	tile_data_base |= (m_fifo.bg_w.tile_index << 4);
+	tile_data_base |= ((m_ppu_io.ly + m_ppu_io.scy) % 8) << 1;
+
+	m_fifo.bg_w.tile_address = tile_data_base;
 }
 
 void PPU::fetcher_low() {
@@ -470,9 +447,10 @@ void PPU::fetcher_high() {
 	m_fifo.bg_w.tile_high = m_memory->vram[u16((m_fifo.bg_w.tile_address + 1) - 0x8000)];
 }
 
+//todo fix this
 void PPU::fetcher_push() {
-	if (background_fifo.size() < 8) {
-		for (int b = 7; b > 0; b--) {
+	if (background_fifo.empty()) {
+		for (int b = 7; b >= 0; b--) {
 			u8 low = (m_fifo.bg_w.tile_low >> b) & 0x01;
 			u8 high = (m_fifo.bg_w.tile_high >> b) & 0x01;
 
@@ -485,14 +463,14 @@ void PPU::fetcher_push() {
 			};
 
 			background_fifo.push(p);
+			m_fifo.bg_w.fetcher_x++;
 		}
-
-		m_fifo.bg_w.fetcher_x++;
 	}
 }
 
 void PPU::reset_fifos() {
 	m_fifo = {};
+	m_fifo.start_of_scanline = true;
 
 	while (!background_fifo.empty()) {
 		background_fifo.pop();
@@ -515,18 +493,25 @@ u16 PPU::convert_tile_id_to_address(u8 tile_id) {
 
 void PPU::output_pixels() {
 	if (!background_fifo.empty()) {
-		if (!m_fifo.ready) {
-			if (background_fifo.size() >= 8) {
-				for (int i = 0; i < (m_ppu_io.scx % 0x08); i++) {
-					background_fifo.pop();
-				}
+		/*
+		if (m_fifo.start_of_scanline) {
+			m_fifo.discard = m_ppu.current_scx % 8;
 
-				m_fifo.ready = true;
-				return;
+			for (m_fifo.discard; m_fifo.discard >= 0; m_fifo.discard--) {
+				if (!background_fifo.empty()) {
+					background_fifo.pop();
+
+					if (m_fifo.discard == 0) {
+						m_fifo.start_of_scanline = false;
+					}
+
+					return;
+				}
 			}
 		}
+		*/
 
-		if (m_fifo.ready) {
+		//if (!m_fifo.start_of_scanline) {
 			s_pixel out = background_fifo.front();
 			background_fifo.pop();
 
@@ -535,6 +520,6 @@ void PPU::output_pixels() {
 
 			m_draw_data->frame[m_ppu_io.ly * DISPLAY_WIDTH + m_fifo.screen_x] = sb_colours[colour];
 			m_fifo.screen_x++;
-		}
+		//}
 	}
 }
