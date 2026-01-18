@@ -49,28 +49,28 @@ public:
 	//READ FILE IN BYTES INTO A SPAN
 	inline static bool read_file_in_bytes(std::span<uint8_t> buffer, std::filesystem::path path) {
 		if (!check_file_exists(path) || !check_file_is_regular(path)) {
-			Logger::Log("File does not exist or is not a regular file", LOGGER_LEVEL_DEBUG, LOGGER_PR_DEBUG);
+			i_Logger->Log("File does not exist or is not a regular file", LOGGER_PR_DEBUG);
 			return false;
 		}
 
 		size_t file_size = get_file_size(path);
 		if (buffer.size() < file_size) {
-			Logger::Log("Buffer size is invalid for this ROM file", LOGGER_LEVEL_DEBUG, LOGGER_PR_DEBUG);
+			i_Logger->Log("Buffer size is invalid for this ROM file", LOGGER_PR_DEBUG);
 			return false;
 		}
 
 		std::fstream in{ path, std::ios::in | std::ios::binary };
 		if (!in.is_open()) {
-			Logger::Log("File could not be opened", LOGGER_LEVEL_DEBUG, LOGGER_PR_DEBUG);
+			i_Logger->Log("File could not be opened", LOGGER_PR_DEBUG);
 			return false;
 		}
 
 		in.read(reinterpret_cast<char*>(buffer.data()), file_size);
 		in.close();
 
-		Logger::Log("File read success", LOGGER_LEVEL_DEBUG, LOGGER_PR_DEBUG);
-		Logger::Log(std::format("Name: {}", get_file_name(path)), LOGGER_LEVEL_DEBUG, LOGGER_PR_DEBUG);
-		Logger::Log(std::format("Size: {} bytes", get_file_size(path)), LOGGER_LEVEL_DEBUG, LOGGER_PR_DEBUG);
+		i_Logger->Log("File read success", LOGGER_PR_DEBUG);
+		i_Logger->Log(std::format("Name: {}", get_file_name(path)), LOGGER_PR_DEBUG);
+		i_Logger->Log(std::format("Size: {} bytes", get_file_size(path)), LOGGER_PR_DEBUG);
 
 		return true;
 	}

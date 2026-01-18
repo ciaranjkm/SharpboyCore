@@ -8,6 +8,7 @@
 
 #include "Utilities/SBReader.h"
 #include "Utilities/SBLogger.h"
+#include "Utilities/SBDebug.h"
 
 #include "Sync.h"
 #include "ComponentManager.h"
@@ -76,8 +77,7 @@ public:
 	bool get_audio_buffer_ready();
 
 	//DEBUG
-	s_core_context* get_core_context();
-	ComponentManager* get_component_manager();
+	SBDebug* get_debugger();
 
 private:
 	//CONTEXTS
@@ -87,4 +87,7 @@ private:
 	//COMPONENTS
 	ComponentManager m_components;
 	Syncroniser m_syncroniser;
+
+	//DEBUG
+	SBDebug m_debug;
 };

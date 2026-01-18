@@ -1,24 +1,29 @@
 #include <SharpboyCore.h>
 
 //CONSTRUCTOR / DESTRUCTOR
-SharpboyCore::SharpboyCore() {
+SharpboyCore::SharpboyCore() : m_debug(&m_components) {
+	i_Logger = std::make_unique<Logger>();
+	set_logging_level(LOGGER_LEVEL_DEBUG);
+
 	m_core_context.initialised = false;
 
 	//LINK COMPONENTS
-	if (!m_components.link_components(&m_syncroniser)) {
-		Logger::Log("Failed to link components", m_core_context.log_level, LOGGER_PR_ERROR);
+	if (!m_components.link_components(&m_syncroniser)) { //todo remove syncronisers owenrship of components 
+		i_Logger->Log("Failed to link components", LOGGER_PR_ERROR);
 		return;
 	}
 
 	m_core_context.initialised = true;
 	m_core_context.emu_ready = true;
 
-	Logger::Log("SharpboyCore instance ready", m_core_context.log_level, LOGGER_PR_INFO);
+	i_Logger->Log("SharpboyCore instance ready", LOGGER_PR_INFO);
 }
 
 SharpboyCore::~SharpboyCore() {
+	i_Logger.reset();
+
 	m_components.reset_components();
-	Logger::Log("SharpboyCore instance destroyed", m_core_context.log_level, LOGGER_PR_INFO);
+	i_Logger->Log("SharpboyCore instance destroyed", LOGGER_PR_INFO);
 }
 
 bool SharpboyCore::is_initialised() const {
@@ -41,23 +46,30 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	rom.resize(FileReader::get_file_size(rom_path));
 
 	if (!FileReader::read_file_in_bytes(rom, rom_path)) {
-		Logger::Log(std::format("Failed to read ROM file : {}", rom_file_name.string()), m_core_context.log_level, LOGGER_PR_ERROR);
+		i_Logger->Log(std::format("Failed to read ROM file : {}", rom_file_name.string()), LOGGER_PR_ERROR);
 		return false;
 	}
 
 	std::vector<u8> boot_rom = std::vector<u8>();
-	boot_rom.resize(FileReader::get_file_size(m_core_context.boot_rom_file));
 
 	if (m_core_context.using_boot_rom) {
-		if (!FileReader::read_file_in_bytes(boot_rom, m_core_context.boot_rom_file)) {
-			m_core_context.using_boot_rom = false;
-			Logger::Log("Continuing without boot ROM, could not be read or found", m_core_context.log_level, LOGGER_PR_WARNING);
+
+		if (!FileReader::check_file_exists(m_core_context.boot_rom_file)) {
+			i_Logger->Log("Continuing without boot ROM, could not be read or found", LOGGER_PR_WARNING);
+		}
+		else {
+			boot_rom.resize(FileReader::get_file_size(m_core_context.boot_rom_file));
+
+			if (!FileReader::read_file_in_bytes(boot_rom, m_core_context.boot_rom_file)) {
+				m_core_context.using_boot_rom = false;
+				i_Logger->Log("Continuing without boot ROM, could not be read or found", LOGGER_PR_WARNING);
+			}
 		}
 	}
 
 	//ASSIGN A CARTRIDGE TYPE FOR THE ROM
 	if (!m_components.assign_cart_type(CART_ROM)) { //todo rom only for testing
-		Logger::Log("Could not create a cartridge object for this ROM!", m_core_context.log_level, LOGGER_PR_ERROR);
+		i_Logger->Log("Could not create a cartridge object for this ROM!", LOGGER_PR_ERROR);
 		return false;
 	}
 
@@ -70,7 +82,7 @@ bool SharpboyCore::initialise_new_instance(std::filesystem::path rom_file_name, 
 	m_core_context.emu_ready = false;
 	m_core_context.emu_active = true;
 
-	Logger::Log(std::format("SharpboyCore instance loaded {} correctly", rom_file_name.string()), m_core_context.log_level, LOGGER_PR_INFO);
+	i_Logger->Log(std::format("SharpboyCore instance loaded {} correctly", rom_file_name.string()), LOGGER_PR_INFO);
 	return true;
 }
 
@@ -81,12 +93,13 @@ void SharpboyCore::cleanup_current_instance() {
 	m_core_context.emu_active = false;
 	m_core_context.emu_ready = true;
 
-	Logger::Log("SharpboyCore instance cleaned up correctly", m_core_context.log_level, LOGGER_PR_INFO);
+	i_Logger->Log("SharpboyCore instance cleaned up correctly", LOGGER_PR_INFO);
 }
 
 //FILEREADER PATH ADJUSTMENTS
 void SharpboyCore::set_roms_directory(std::filesystem::path directory) {
 	m_core_context.roms_directory = directory;
+	i_Logger->Log(std::format("ROMs directory set to {}", directory.filename().string()), LOGGER_PR_INFO);
 }
 
 std::filesystem::path SharpboyCore::get_roms_directory() const {
@@ -95,6 +108,7 @@ std::filesystem::path SharpboyCore::get_roms_directory() const {
 
 void SharpboyCore::set_boot_rom_file(std::filesystem::path file_name) {
 	m_core_context.boot_rom_file = file_name;
+	i_Logger->Log(std::format("BOOT ROM file location set to {}", file_name.filename().string()), LOGGER_PR_INFO);
 }
 
 std::filesystem::path SharpboyCore::get_boot_rom_file() const {
@@ -104,6 +118,8 @@ std::filesystem::path SharpboyCore::get_boot_rom_file() const {
 //LOGGER LEVEL ADJUSTMENTS
 void SharpboyCore::set_logging_level(e_logger_level level) {
 	m_core_context.log_level = level;
+	i_Logger->set_log_level(level);
+	i_Logger->Log("Logger level updated!", LOGGER_PR_DEBUG);
 }
 
 e_logger_level SharpboyCore::get_logging_level() const {
@@ -135,10 +151,6 @@ void SharpboyCore::reset_frame_ready() {
 }
 
 //DEBUG
-s_core_context* SharpboyCore::get_core_context() {
-	return &m_core_context;
-}
-
-ComponentManager* SharpboyCore::get_component_manager() {
-	return &m_components;
+SBDebug* SharpboyCore::get_debugger() {
+	return &m_debug;
 }

@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
+#include <format>
 #include <iostream>
+#include <memory>
 
 enum e_logger_prefix {
 	LOGGER_PR_DEBUG, //DEBUG INFO ON CPU, PPU, APU, ETC
@@ -17,45 +19,46 @@ enum e_logger_level {
 	LOGGER_LEVEL_DEBUG
 };
 
+/*
+	Simple logger class to log messages, includes instance of itself as a unique ptr create it and just include the .h 
+	where you need to log from. This could probably be done better with something else but this works for now :/
+
+	Currently the logger is held by core but you can obviously change this.
+*/
+
 class Logger {
 public:
-	Logger() = delete;
+	inline void set_log_level(e_logger_level new_level) {
+		m_current_level = new_level;
+	}
 
-	//SIMPLE LOGGING FUNCTION
-	inline static void Log(const std::string& msg, e_logger_level current_level, e_logger_prefix prefix = LOGGER_PR_DEBUG) {
-		if (current_level == LOGGER_LEVEL_NONE) {
-			return;
-		}
-		
-		std::string out = "";
+	inline void Log(std::string msg, e_logger_prefix prefix = LOGGER_PR_INFO) {
+		prepend_prefix(msg, prefix);
 
+		std::cout << msg;
+	}
+
+private:
+	e_logger_level m_current_level = LOGGER_LEVEL_BASIC;
+
+	inline void prepend_prefix(std::string& msg, e_logger_prefix prefix) {
 		switch (prefix) {
 		case LOGGER_PR_INFO:
-			out.append("[SB:INFO] ");
-			break;
-
-		case LOGGER_PR_WARNING:
-			out.append("[SB:WARNING] ");
-			break;
-
-		case LOGGER_PR_ERROR:
-			out.append("[SB:ERROR] ");
-			break;
-
+			msg = std::format("[SB:INFO] {}\n", msg);
+			return;
 		case LOGGER_PR_DEBUG:
-			if (current_level != LOGGER_LEVEL_DEBUG) {
-				return;
-			}
-			out.append("[SB:DEBUG] ");
-			break;
-
+			msg = std::format("[SB:DEBUG] {}\n", msg);
+			return;
+		case LOGGER_PR_WARNING:
+			msg = std::format("[SB:WARNING] {}\n", msg);
+			return;
+		case LOGGER_PR_ERROR:
+			msg = std::format("[SB:ERROR] {}\n", msg);
+			return;
 		default:
-			break;
+			return;
 		}
-
-		out.append(msg);
-		out.append("\n");
-
-		std::cout << out;
 	}
 };
+
+static std::unique_ptr<Logger> i_Logger = nullptr;

@@ -108,8 +108,8 @@ struct s_ppu_fifos {
 
 	int ticks = 0;
 	bool ready = false;
-	bool start_of_scanline = true;
 
+	bool start_of_scanline = true;
 	int discard = 0;
 	int screen_x = 0;
 };
@@ -136,9 +136,6 @@ struct s_ppu_context {
 	int ticks_until_vblank = 4;
 	bool block_vram = false;
 	bool block_oam = false;
-
-	u8 new_ly = 0x00;
-	bool ly_increment = false;
 
 	bool update_stat = false;
 	int update_stat_count = 0;
