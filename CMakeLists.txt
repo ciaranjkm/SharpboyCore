@@ -23,6 +23,8 @@ add_library(SharpboyCore STATIC
 	"src/Components/Cartridges/CartMBC0.cpp" 
 	"src/Components/Cartridges/Cartridge.cpp" 
 	"src/Components/Cartridges/CartMBC1.cpp"
-	"src/Components/Joypad.cpp" "src/Utilities/SBDebug.cpp")
+	"src/Components/Joypad.cpp" 
+	
+	"src/Utilities/SBDebug.cpp")
 
 target_include_directories(SharpboyCore PUBLIC "include")
